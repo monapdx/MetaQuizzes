@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Technology Worldview — MetaQuizzes</title>
+  <link rel="stylesheet" href="shared/ink-night.css" />
+</head>
+<body class="mq">
+  <div class="mq-bg" aria-hidden="true"></div>
+
+  <header class="mq-top">
+    <a class="mq-brand" href="index.html">MetaQuizzes</a>
+    <span class="mq-quiz-label">Technology</span>
+  </header>
+
+  <main class="mq-stage">
+    <h1>What is your technology worldview?</h1>
+    <p class="mq-lede">Is technology liberation, domination, adaptation, or simply a tool? Choose the answer closest to your view—even when none is perfect.</p>
+
+    <div class="mq-progress">
+      <div class="mq-progress-meta">
+        <span class="mq-section-label">Question</span>
+        <span class="mq-progress-count" id="progressCount">1 / 1</span>
+      </div>
+      <div class="mq-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="mq-progress-fill" id="bar"></span>
+      </div>
+    </div>
+
+    <div class="mq-panel" aria-live="polite">
+      <form id="quiz" novalidate></form>
+      <p class="mq-err" id="error" role="alert"></p>
+
+      <section class="mq-results" id="results" hidden>
+        <div class="mq-results-header">
+          <div>
+            <h2>Your technology worldview</h2>
+            <p class="mq-muted" style="margin:0">Scores are relative preferences</p>
+          </div>
+          <div class="mq-actions">
+            <button type="button" class="mq-btn-secondary" id="restart">Retake</button>
+          </div>
+        </div>
+
+        <div class="mq-result-hero">
+          <p class="mq-eyebrow">Your profile</p>
+          <h3 id="result-name"></h3>
+          <p id="result-summary"></p>
+          <p><strong>Your central conviction:</strong> <span id="result-principle"></span></p>
+          <p><strong>Your potential blind spot:</strong> <span id="result-blindspot"></span></p>
+        </div>
+
+        <h3 class="mq-subsection-title">Worldview affinities</h3>
+        <div class="mq-rank-list" id="score-bars"></div>
+        <p class="mq-desc" id="score-explanation"></p>
+      </section>
+    </div>
+  </main>
+
+  <script src="shared/quiz-ui.js"></script>
+  <script>
+
+    const worldviews = {
+      humanist: "Digital Humanism",
+      decentralist: "Decentralization",
+      solarpunk: "Solarpunk",
+      transhumanist: "Transhumanism",
+      accelerationist: "Accelerationism",
+      regulator: "Public Governance",
+      privacy: "Privacy & Autonomy",
+      restraint: "Technological Restraint",
+      openweb: "Open-Web Idealism",
+      pragmatist: "Pragmatic Adaptation"
+    };
+
+    const questions = [
+      {
+        text: "A new technology could eliminate millions of jobs while making essential goods dramatically cheaper. What should society do?",
+        options: [
+          ["Deploy it quickly; delaying abundance to preserve obsolete jobs makes little sense.", {accelerationist: 3, transhumanist: 1}],
+          ["Deploy it only alongside income guarantees, worker power, and a fair share of the gains.", {humanist: 2, regulator: 2, solarpunk: 1}],
+          ["Let workers and local communities decide whether and how it is introduced.", {decentralist: 2, humanist: 2}],
+          ["Ask whether cheaper production is worth making human skill and livelihood disposable.", {restraint: 3, humanist: 1}]
+        ]
+      },
+      {
+        text: "What should happen when a convenient app requires extensive personal data to function?",
+        options: [
+          ["People should decide for themselves whether the convenience is worth the trade.", {pragmatist: 2, privacy: 1}],
+          ["It should collect only what is necessary, with meaningful consent and an offline alternative.", {privacy: 3, humanist: 1}],
+          ["Strict privacy rules should apply even if they make the product less capable.", {privacy: 2, regulator: 3}],
+          ["A community-controlled or self-hosted version should replace the centralized service.", {decentralist: 3, openweb: 2}]
+        ]
+      },
+      {
+        text: "If safe brain implants could substantially improve memory and concentration, how should they be treated?",
+        options: [
+          ["As the next step in human development; enhancement should be welcomed.", {transhumanist: 3, accelerationist: 1}],
+          ["As a personal choice, provided refusing one never becomes a social or economic penalty.", {privacy: 2, humanist: 2}],
+          ["As a medical technology requiring careful public oversight and long-term evidence.", {regulator: 2, pragmatist: 2}],
+          ["With deep suspicion; turning ordinary cognition into an upgrade market could diminish human life.", {restraint: 3, humanist: 1}]
+        ]
+      },
+      {
+        text: "What is the greatest problem with today's internet?",
+        options: [
+          ["A handful of companies control identity, speech, discovery, and social participation.", {openweb: 3, decentralist: 2}],
+          ["Its business models reward surveillance, manipulation, and compulsive behavior.", {privacy: 2, humanist: 2, regulator: 1}],
+          ["It has become too cautious, regulated, and resistant to radical experimentation.", {accelerationist: 3}],
+          ["It substitutes shallow connectivity for embodied community and meaningful life.", {restraint: 3, solarpunk: 1}]
+        ]
+      },
+      {
+        text: "An AI system produces better medical diagnoses than most doctors but sometimes fails in ways nobody can explain. How should it be used?",
+        options: [
+          ["Use it widely; measurable performance matters more than whether humans understand every decision.", {accelerationist: 2, pragmatist: 2}],
+          ["Use it as advice, while a human remains responsible for the final decision.", {humanist: 3, pragmatist: 2}],
+          ["Allow it only after independent testing, public rules, and a right to appeal.", {regulator: 3, humanist: 1}],
+          ["Keep diagnosis human-led; some decisions should not be surrendered to opaque systems.", {restraint: 3, humanist: 1}]
+        ]
+      },
+      {
+        text: "Which future sounds most desirable?",
+        options: [
+          ["Humans transcend biological limits through AI, genetic engineering, and cybernetics.", {transhumanist: 3, accelerationist: 1}],
+          ["Clean, walkable communities use appropriate technology while restoring ecosystems.", {solarpunk: 3, restraint: 1}],
+          ["A decentralized digital world where people own their identities, tools, and creations.", {decentralist: 2, openweb: 3}],
+          ["Reliable public technology quietly makes ordinary life safer, fairer, and easier.", {regulator: 2, pragmatist: 2, humanist: 1}]
+        ]
+      },
+      {
+        text: "A city can sharply reduce crime by linking cameras, facial recognition, and predictive software. What matters most?",
+        options: [
+          ["Whether rigorous evidence shows that the system actually works better than alternatives.", {pragmatist: 3, regulator: 1}],
+          ["The surveillance power itself is unacceptable, even if it produces some benefits.", {privacy: 3, decentralist: 1}],
+          ["It may be used only under strict law, independent audits, and democratic control.", {regulator: 3, privacy: 1}],
+          ["Invest in community conditions and human relationships instead of automated control.", {humanist: 2, solarpunk: 2, restraint: 1}]
+        ]
+      },
+      {
+        text: "How should society respond when young people adopt a new digital culture that adults find disturbing?",
+        options: [
+          ["Leave it alone unless clear harm emerges; every generation invents unfamiliar forms.", {openweb: 2, accelerationist: 1, privacy: 1}],
+          ["Study the actual effects and respond proportionally rather than panicking or celebrating.", {pragmatist: 3}],
+          ["Require platforms to design for child welfare rather than maximum engagement.", {regulator: 2, humanist: 2}],
+          ["Encourage more offline independence, unsupervised play, and physical community.", {restraint: 2, solarpunk: 2}]
+        ]
+      },
+      {
+        text: "Who should own the digital tools people depend on every day?",
+        options: [
+          ["Their creators and investors, as long as users can choose competitors.", {pragmatist: 2, accelerationist: 1}],
+          ["Users themselves, through open source, self-hosting, cooperatives, or portable data.", {openweb: 3, decentralist: 3}],
+          ["The public, when a service has become essential infrastructure.", {regulator: 3, humanist: 1}],
+          ["Ownership matters less than whether the tool is humane, repairable, and ecologically sustainable.", {solarpunk: 2, restraint: 2, humanist: 1}]
+        ]
+      },
+      {
+        text: "A fully autonomous vehicle is statistically safer than a human driver but must make rare life-and-death decisions. Should it be permitted?",
+        options: [
+          ["Yes. Refusing a safer system because it feels unsettling would cost lives.", {accelerationist: 2, pragmatist: 3}],
+          ["Yes, after transparent standards, liability rules, and independent certification.", {regulator: 3, pragmatist: 1}],
+          ["Only if passengers and communities can inspect or choose the rules it follows.", {decentralist: 2, privacy: 1, humanist: 1}],
+          ["Not if responsibility becomes so automated that no human is meaningfully accountable.", {humanist: 2, restraint: 2}]
+        ]
+      },
+      {
+        text: "What is your reaction to the claim that technology is neutral and only its use is good or bad?",
+        options: [
+          ["Mostly true; tools expand options, and humans decide what to do with them.", {accelerationist: 2, pragmatist: 1}],
+          ["False; every design embeds assumptions, incentives, and permitted forms of behavior.", {humanist: 3, privacy: 1}],
+          ["False; technologies reshape society in ways nobody individually chooses or controls.", {restraint: 3, regulator: 1}],
+          ["It depends on whether people can inspect, modify, refuse, and replace the tool.", {openweb: 2, decentralist: 3}]
+        ]
+      },
+      {
+        text: "A powerful new invention may have catastrophic risks, but slowing research could let less responsible actors develop it first. What should happen?",
+        options: [
+          ["Continue quickly; capability cannot be permanently contained, so responsible builders should lead.", {accelerationist: 3, transhumanist: 1}],
+          ["Pause the highest-risk work until enforceable international safeguards exist.", {regulator: 3, restraint: 2}],
+          ["Distribute the knowledge widely so no state or corporation can monopolize it.", {decentralist: 3, openweb: 1}],
+          ["Proceed in limited stages and change course as real evidence accumulates.", {pragmatist: 3}]
+        ]
+      },
+      {
+        text: "Which approach to environmental crisis seems most promising?",
+        options: [
+          ["Rapid innovation: advanced energy, carbon removal, engineered food, and better computation.", {accelerationist: 2, transhumanist: 2}],
+          ["Redesign daily life around sufficiency, repair, local resilience, and ecological integration.", {solarpunk: 3, restraint: 2}],
+          ["Large-scale public planning guided by climate science and enforceable targets.", {regulator: 3, pragmatist: 1}],
+          ["Open technologies that let communities build solutions suited to their own environments.", {decentralist: 2, openweb: 1, solarpunk: 2}]
+        ]
+      },
+      {
+        text: "If realistic virtual worlds became more fulfilling than most people's physical lives, would that be a problem?",
+        options: [
+          ["Not inherently. A meaningful experience does not become false because it is virtual.", {transhumanist: 3, privacy: 1}],
+          ["Yes, if people retreat because physical society has been allowed to become unbearable.", {humanist: 3, solarpunk: 1}],
+          ["Only if the worlds are controlled by companies that can manipulate or dispossess their inhabitants.", {openweb: 2, decentralist: 2, privacy: 1}],
+          ["Yes. Human flourishing requires bodies, places, nature, and unmediated relationships.", {restraint: 3, solarpunk: 2}]
+        ]
+      },
+      {
+        text: "What should happen to old devices that still work but no longer receive software support?",
+        options: [
+          ["Manufacturers should be required to provide long-term support, parts, and repair access.", {regulator: 2, solarpunk: 2}],
+          ["The software should become open so owners and communities can maintain it themselves.", {openweb: 3, decentralist: 2}],
+          ["Replacement is often reasonable if newer devices are substantially safer or more capable.", {pragmatist: 2, accelerationist: 1}],
+          ["Planned obsolescence reveals a culture that treats both objects and human labor as disposable.", {restraint: 3, humanist: 1}]
+        ]
+      },
+      {
+        text: "Should parents be allowed to genetically enhance future children if the procedure becomes safe?",
+        options: [
+          ["Yes. Giving children greater health and ability is an extension of ordinary parental care.", {transhumanist: 3, accelerationist: 1}],
+          ["Only to prevent serious disease, not to create competitive advantages.", {regulator: 2, humanist: 2}],
+          ["The technology should be publicly available so enhancement does not create a biological class system.", {transhumanist: 2, regulator: 2}],
+          ["No. Future people cannot consent to being engineered around current ideas of superiority.", {humanist: 2, restraint: 3}]
+        ]
+      },
+      {
+        text: "What makes an online community genuinely valuable?",
+        options: [
+          ["Its members control its norms, archives, identity, and technical infrastructure.", {openweb: 3, decentralist: 2}],
+          ["It creates authentic relationships and improves the lives of the humans participating.", {humanist: 3}],
+          ["It connects people efficiently at a scale that would otherwise be impossible.", {accelerationist: 1, pragmatist: 2}],
+          ["It remains small, intentional, and capable of supporting life beyond the screen.", {restraint: 2, solarpunk: 2}]
+        ]
+      },
+      {
+        text: "A government proposes a universal digital identity to simplify benefits, voting, banking, and medical records. Your response?",
+        options: [
+          ["Support it if it is secure, inclusive, and administered as accountable public infrastructure.", {regulator: 3, pragmatist: 1}],
+          ["Oppose it; a single identity system creates an intolerable infrastructure of surveillance and exclusion.", {privacy: 3, decentralist: 2}],
+          ["Use decentralized credentials that reveal only the information required for each interaction.", {decentralist: 3, privacy: 2}],
+          ["Offer it as an option while preserving functional nondigital alternatives.", {humanist: 2, pragmatist: 2}]
+        ]
+      },
+      {
+        text: "Which statement comes closest to your overall view of technological progress?",
+        options: [
+          ["Humanity's greatest problems are solvable if we stop fearing transformative innovation.", {accelerationist: 3, transhumanist: 2}],
+          ["Progress means giving people more agency, dignity, access, and control—not merely greater capability.", {humanist: 3, privacy: 1}],
+          ["Technology should evolve through open experimentation that no central power can monopolize.", {openweb: 2, decentralist: 3}],
+          ["A technology is progress only when its human and ecological benefits survive honest measurement.", {solarpunk: 2, pragmatist: 3}],
+          ["The ability to build something is not evidence that life will improve if we do.", {restraint: 3}],
+          ["Powerful systems require public rules strong enough to protect people who cannot simply opt out.", {regulator: 3, privacy: 1}]
+        ]
+      },
+      {
+        text: "If you could guarantee only one feature of the technological future, which would you choose?",
+        options: [
+          ["People remain free to live without being tracked, scored, or technologically coerced.", {privacy: 3}],
+          ["Knowledge and creative tools remain open, interoperable, and owned by their users.", {openweb: 3, decentralist: 1}],
+          ["Technology eliminates disease, disability, involuntary aging, and biological limitation.", {transhumanist: 3}],
+          ["Innovation stays fast enough to solve problems we cannot solve with today's capabilities.", {accelerationist: 3}],
+          ["Technology operates within ecological limits and strengthens real communities.", {solarpunk: 3, restraint: 1}],
+          ["Everyone benefits from essential technologies regardless of wealth or status.", {humanist: 2, regulator: 2}]
+        ]
+      }
+    ];
+
+    const profiles = {
+      humanist: {
+        name: "Digital Humanist",
+        summary: "You judge technology by what it does to human agency, dignity, relationships, and material well-being. You welcome useful innovation, but reject the idea that efficiency or capability automatically counts as progress.",
+        principle: "Technology should adapt to human needs; people should not be forced to adapt to technology.",
+        blindspot: "Human-centered safeguards can become vague or paternalistic when people disagree about what flourishing means."
+      },
+      decentralist: {
+        name: "Decentralized Technologist",
+        summary: "You want technological power distributed across users, communities, and interoperable networks. Your ideal systems are inspectable, replaceable, resistant to monopoly, and difficult for any single institution to capture.",
+        principle: "No one should have to trust a central gatekeeper when power can be distributed.",
+        blindspot: "Decentralized systems can reproduce inequality, diffuse accountability, and demand technical effort that many people cannot realistically provide."
+      },
+      solarpunk: {
+        name: "Solarpunk Ecologist",
+        summary: "You favor technology that restores ecosystems, supports resilient communities, and improves ordinary life without demanding endless extraction or growth. You imagine progress as cleaner, calmer, more local, and more beautiful.",
+        principle: "The best technology helps human communities thrive as part of the living world.",
+        blindspot: "Local, harmonious visions can underestimate the scale, conflict, infrastructure, and industrial capacity required to sustain billions of people."
+      },
+      transhumanist: {
+        name: "Transhumanist",
+        summary: "You see human biology as a starting condition rather than a sacred boundary. Used responsibly, technology can expand cognition, transform embodiment, end unwanted limitations, and create forms of life not confined by evolution.",
+        principle: "People should be free to transcend limitations they did not choose.",
+        blindspot: "Enhancement can become coercive when access is unequal or when society begins treating unmodified people as defective."
+      },
+      accelerationist: {
+        name: "Techno-Accelerationist",
+        summary: "You believe bold experimentation and rapid capability growth are essential to solving problems that existing institutions cannot. Stagnation, excessive caution, and protecting obsolete systems may be more dangerous than disruption.",
+        principle: "Humanity cannot reach a radically better future by freezing development at the present.",
+        blindspot: "Speed can lock in irreversible harms before institutions, communities, or even inventors understand what has been created."
+      },
+      regulator: {
+        name: "Civic Technologist",
+        summary: "You believe powerful technologies require equally capable public institutions. Standards, audits, universal access, democratic accountability, and enforceable rights are how innovation becomes public benefit instead of private domination.",
+        principle: "Technology that governs people's lives must itself be governable.",
+        blindspot: "Regulators can be captured, technically outmatched, slow to adapt, or used by established companies to prevent smaller challengers from competing."
+      },
+      privacy: {
+        name: "Privacy Sovereigntist",
+        summary: "You regard privacy as the foundation of autonomy rather than a preference to trade away casually. A humane technological future must preserve the ability to think, associate, experiment, and live without constant observation or scoring.",
+        principle: "A person cannot be fully free while permanently visible to systems of power.",
+        blindspot: "Strong privacy can also shield abuse, obstruct accountability, and make some beneficial forms of coordination or research harder."
+      },
+      restraint: {
+        name: "Technological Restraint Advocate",
+        summary: "You reject the assumption that every new capability should be adopted. Technologies reshape attention, relationships, labor, environments, and values; sometimes the wisest form of agency is refusing, limiting, or reversing them.",
+        principle: "The ability to build something does not create an obligation to live with it.",
+        blindspot: "Restraint can romanticize older arrangements, preserve existing suffering, or leave development to actors who are less conscientious."
+      },
+      openweb: {
+        name: "Open-Web Idealist",
+        summary: "You want a digital world built from open protocols, personal sites, portable identity, user-controlled archives, creative experimentation, and communities that exist beyond corporate permission. To you, the web should be a place people inhabit and shape—not a handful of platforms they rent access to.",
+        principle: "People should own their digital lives and be able to build without asking permission.",
+        blindspot: "Openness alone does not guarantee discovery, safety, accessibility, sustainable funding, or freedom from new concentrations of influence."
+      },
+      pragmatist: {
+        name: "Adaptive Tech Pragmatist",
+        summary: "You resist both technological worship and reflexive rejection. You want evidence, proportional responses, iterative deployment, and the freedom to change course as actual effects become clearer.",
+        principle: "Judge technologies by demonstrated consequences, not utopian promises or dystopian symbolism.",
+        blindspot: "Case-by-case flexibility can lack firm boundaries and may react too slowly when harms are cumulative or irreversible."
+      },
+      pluralist: {
+        name: "Technological Pluralist",
+        summary: "You do not see one master principle as sufficient for every technology. Openness, expertise, privacy, ecology, innovation, public accountability, and human meaning each matter in different proportions depending on what is being built and who must live with it.",
+        principle: "Different technologies demand different social contracts.",
+        blindspot: "Balancing many valid concerns can produce indecision or allow the most powerful actor to define what a supposedly reasonable compromise looks like."
+      }
+    };
+
+    const form = document.getElementById("quiz");
+    const results = document.getElementById("results");
+    const error = document.getElementById("error");
+    const barEl = document.getElementById("bar");
+    const progressCount = document.getElementById("progressCount");
+    const labels = worldviews;
+
+    let currentIndex = 0;
+    let transitioning = false;
+    const answers = {};
+
+    function renderQuiz() {
+      form.innerHTML = "";
+      questions.forEach((question, questionIndex) => {
+        const sec = document.createElement("section");
+        sec.className = "mq-q" + (questionIndex === 0 ? " is-active is-enter" : "");
+        sec.dataset.index = String(questionIndex);
+        if (questionIndex !== 0) sec.hidden = true;
+
+        const h2 = document.createElement("h2");
+        h2.className = "mq-q-title";
+        h2.textContent = question.text;
+        sec.appendChild(h2);
+
+        const opts = document.createElement("div");
+        opts.className = "mq-options";
+        question.options.forEach((option, optionIndex) => {
+          const id = "q" + questionIndex + "_opt" + optionIndex;
+          const label = document.createElement("label");
+          label.className = "mq-option";
+          label.setAttribute("for", id);
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = "q" + questionIndex;
+          input.id = id;
+          input.value = String(optionIndex);
+          const span = document.createElement("span");
+          span.textContent = option[0];
+          label.append(input, span);
+          input.addEventListener("change", () => {
+            answers[questionIndex] = optionIndex;
+            opts.querySelectorAll(".mq-option").forEach((el) => el.classList.remove("is-selected"));
+            label.classList.add("is-selected");
+            error.classList.remove("is-visible");
+            error.textContent = "";
+          });
+          opts.appendChild(label);
+        });
+        sec.appendChild(opts);
+
+        const nav = document.createElement("div");
+        nav.className = "mq-nav";
+        const back = document.createElement("button");
+        back.type = "button";
+        back.className = "mq-btn-secondary";
+        back.textContent = "Back";
+        back.disabled = questionIndex === 0;
+        back.addEventListener("click", () => goto(questionIndex - 1));
+        const next = document.createElement("button");
+        next.type = "button";
+        next.textContent = questionIndex === questions.length - 1 ? "See results" : "Next";
+        next.addEventListener("click", () => {
+          const checked = form.querySelector('input[name="q' + questionIndex + '"]:checked');
+          if (!checked) {
+            error.textContent = "Please choose an option to continue.";
+            error.classList.add("is-visible");
+            return;
+          }
+          answers[questionIndex] = Number(checked.value);
+          if (questionIndex === questions.length - 1) {
+            showResults(calculateScores());
+          } else {
+            goto(questionIndex + 1);
+          }
+        });
+        nav.append(back, next);
+        sec.appendChild(nav);
+        form.appendChild(sec);
+      });
+      updateProgress(0);
+    }
+
+    function goto(i) {
+      const total = questions.length;
+      if (i < 0) i = 0;
+      if (i >= total) i = total - 1;
+      if (transitioning || i === currentIndex) return;
+      const from = form.querySelector('.mq-q[data-index="' + currentIndex + '"]');
+      const to = form.querySelector('.mq-q[data-index="' + i + '"]');
+      transitioning = true;
+      currentIndex = i;
+      MQ.stageQuestion(from, to, {
+        onDone: () => {
+          transitioning = false;
+          to.querySelector('input[type="radio"]')?.focus();
+        },
+      });
+      updateProgress(i);
+    }
+
+    function updateProgress(idx) {
+      MQ.setProgress(barEl, (idx / questions.length) * 100);
+      progressCount.textContent = (idx + 1) + " / " + questions.length;
+    }
+
+    function calculateScores() {
+      const scores = Object.fromEntries(Object.keys(labels).map((key) => [key, 0]));
+      questions.forEach((question, questionIndex) => {
+        const selected = form.querySelector('input[name="q' + questionIndex + '"]:checked');
+        const weights = question.options[Number(selected.value)][1];
+        Object.entries(weights).forEach(([key, points]) => (scores[key] += points));
+      });
+      return scores;
+    }
+
+function chooseProfile(scores) {
+      const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const [first, second] = ranked;
+      const nearTop = ranked.filter(([, score]) => score >= first[1] - 3).length;
+      if (nearTop >= 4 || (first[1] - second[1] <= 1 && ranked[2][1] >= first[1] - 2)) return profiles.pluralist;
+      return profiles[first[0]];
+    }
+
+    function showResults(scores) {
+      const profile = chooseProfile(scores);
+      const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const max = Math.max(...Object.values(scores), 1);
+
+      document.getElementById("result-name").textContent = profile.name;
+      document.getElementById("result-summary").textContent = profile.summary;
+      document.getElementById("result-principle").textContent = profile.principle;
+      document.getElementById("result-blindspot").textContent = profile.blindspot;
+
+      const bars = document.getElementById("score-bars");
+      bars.innerHTML = ranked
+        .map(([key, score], i) => {
+          const pct = Math.round((score / max) * 100);
+          return (
+            '<div class="mq-rank-row' +
+            (i === 0 ? " is-top" : "") +
+            '">' +
+            '<div class="mq-rank-name">' +
+            labels[key] +
+            "</div>" +
+            '<div class="mq-rank-track"><span class="mq-rank-fill" data-width="' +
+            pct +
+            '%"></span></div>' +
+            '<div class="mq-rank-pct">' +
+            score +
+            "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+
+      const topNames = ranked.slice(0, 3).map(([key]) => labels[key]);
+      const bottomName = labels[ranked[ranked.length - 1][0]];
+      document.getElementById("score-explanation").textContent =
+        `Your strongest affinities were ${topNames[0]}, ${topNames[1]}, and ${topNames[2]}. ` +
+        `${bottomName} received the least weight. Scores are relative affinities, not percentages or judgments of technological knowledge.`;
+
+      form.style.display = "none";
+      results.hidden = false;
+      results.classList.add("is-visible");
+      MQ.setProgress(barEl, 100);
+      progressCount.textContent = questions.length + " / " + questions.length;
+      MQ.staggerReveal(bars);
+      results.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    document.getElementById("restart").addEventListener("click", () => {
+      Object.keys(answers).forEach((k) => delete answers[k]);
+      form.querySelectorAll('input[type="radio"]').forEach((r) => (r.checked = false));
+      form.querySelectorAll(".mq-option").forEach((el) => el.classList.remove("is-selected"));
+      results.hidden = true;
+      results.classList.remove("is-visible");
+      form.style.display = "block";
+      currentIndex = 0;
+      form.querySelectorAll(".mq-q").forEach((q, idx) => {
+        q.classList.toggle("is-active", idx === 0);
+        q.classList.remove("is-exit");
+        q.hidden = idx !== 0;
+        if (idx === 0) {
+          q.classList.remove("is-enter");
+          void q.offsetWidth;
+          q.classList.add("is-enter");
+        }
+      });
+      error.textContent = "";
+      error.classList.remove("is-visible");
+      updateProgress(0);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    renderQuiz();
+  </script>
+</body>
+</html>

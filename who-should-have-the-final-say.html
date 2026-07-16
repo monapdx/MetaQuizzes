@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Who Should Have the Final Say? — MetaQuizzes</title>
+  <link rel="stylesheet" href="shared/ink-night.css" />
+</head>
+<body class="mq">
+  <div class="mq-bg" aria-hidden="true"></div>
+
+  <header class="mq-top">
+    <a class="mq-brand" href="index.html">MetaQuizzes</a>
+    <span class="mq-quiz-label">Authority</span>
+  </header>
+
+  <main class="mq-stage">
+    <h1>Who should have the final say?</h1>
+    <p class="mq-lede">When rights, expertise, democracy, and community needs collide, who gets to decide? Choose the answer closest to your view—even when none is perfect.</p>
+
+    <div class="mq-progress">
+      <div class="mq-progress-meta">
+        <span class="mq-section-label">Question</span>
+        <span class="mq-progress-count" id="progressCount">1 / 1</span>
+      </div>
+      <div class="mq-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="mq-progress-fill" id="bar"></span>
+      </div>
+    </div>
+
+    <div class="mq-panel" aria-live="polite">
+      <form id="quiz" novalidate></form>
+      <p class="mq-err" id="error" role="alert"></p>
+
+      <section class="mq-results" id="results" hidden>
+        <div class="mq-results-header">
+          <div>
+            <h2>Your authority profile</h2>
+            <p class="mq-muted" style="margin:0">Scores are relative preferences</p>
+          </div>
+          <div class="mq-actions">
+            <button type="button" class="mq-btn-secondary" id="restart">Retake</button>
+          </div>
+        </div>
+
+        <div class="mq-result-hero">
+          <p class="mq-eyebrow">Your profile</p>
+          <h3 id="result-name"></h3>
+          <p id="result-summary"></p>
+          <p><strong>Your central principle:</strong> <span id="result-principle"></span></p>
+          <p><strong>Your potential blind spot:</strong> <span id="result-blindspot"></span></p>
+        </div>
+
+        <h3 class="mq-subsection-title">Strongest sources of authority</h3>
+        <div class="mq-rank-list" id="score-bars"></div>
+        <p class="mq-desc" id="score-explanation"></p>
+      </section>
+    </div>
+  </main>
+
+  <script src="shared/quiz-ui.js"></script>
+  <script>
+
+    const sources = {
+      individual: "The Individual",
+      affected: "Affected Parties",
+      experts: "Experts & Evidence",
+      majority: "Democratic Majority",
+      community: "Local Community",
+      institutions: "Public Institutions",
+      consent: "Voluntary Agreement",
+      rights: "Universal Rights"
+    };
+
+    const questions = [
+      {
+        text: "An adult with a serious illness refuses the treatment most likely to save their life. Who should decide what happens?",
+        options: [
+          ["The patient; bodily autonomy includes the right to make a dangerous choice.", {individual: 3, rights: 1}],
+          ["The patient, after qualified professionals make sure the decision is informed.", {individual: 2, experts: 2, consent: 1}],
+          ["The medical team, if they believe the patient is not thinking rationally.", {experts: 3, institutions: 1}],
+          ["The people closest to the patient, because they will share the consequences.", {affected: 2, community: 2}]
+        ]
+      },
+      {
+        text: "A town votes to prohibit a peaceful but deeply unpopular religious practice. Which judgment should prevail?",
+        options: [
+          ["The practitioners' freedom, unless the practice directly harms someone.", {individual: 2, rights: 3}],
+          ["The town's decision; residents should govern their shared culture.", {majority: 2, community: 3}],
+          ["A court should determine whether the restriction violates protected rights.", {institutions: 2, rights: 3}],
+          ["The parties should negotiate conditions everyone can voluntarily accept.", {consent: 3, affected: 1}]
+        ]
+      },
+      {
+        text: "Scientists overwhelmingly agree that a factory is contaminating the local water, but most residents want it kept open for the jobs. Who should have the decisive voice?",
+        options: [
+          ["Independent experts, because facts are not determined by a vote.", {experts: 3, rights: 1}],
+          ["Residents, because they live with both the risks and the economic loss.", {affected: 3, community: 2}],
+          ["The elected government, using evidence and existing environmental law.", {institutions: 3, experts: 1}],
+          ["Every person exposed to the contamination must meaningfully consent.", {consent: 2, individual: 2, rights: 1}]
+        ]
+      },
+      {
+        text: "Parents reject a medically necessary treatment for their young child. Who should decide?",
+        options: [
+          ["The parents; families should normally control family decisions.", {community: 2, individual: 1}],
+          ["Doctors and a court, because the child's basic interests take priority.", {experts: 2, institutions: 2, rights: 2}],
+          ["An independent advocate focused only on the child's rights and expressed wishes.", {rights: 3, affected: 2}],
+          ["A review group including the family, clinicians, and community representatives.", {affected: 2, community: 1, experts: 1, consent: 1}]
+        ]
+      },
+      {
+        text: "A social platform wants to remove legal political speech that most users consider offensive. What should control the decision?",
+        options: [
+          ["The platform; it owns the service and users agreed to its rules.", {consent: 3, individual: 1}],
+          ["The users, through transparent votes or representative governance.", {majority: 3, community: 1}],
+          ["A consistent free-expression principle, regardless of popularity.", {rights: 3, individual: 1}],
+          ["Independent moderators applying evidence-based harm standards.", {experts: 2, institutions: 2}]
+        ]
+      },
+      {
+        text: "A neighborhood desperately needs housing, but longtime residents oppose a large apartment building. Who should have final authority?",
+        options: [
+          ["The property owner, within rules that existed when the property was purchased.", {individual: 2, consent: 3}],
+          ["Current residents, because they bear the change to their neighborhood.", {community: 3, affected: 1}],
+          ["The wider city electorate, because housing affects everyone.", {majority: 3, affected: 1}],
+          ["Planning agencies using housing data and fair-housing obligations.", {experts: 2, institutions: 2, rights: 1}]
+        ]
+      },
+      {
+        text: "During an outbreak, an unvaccinated employee wants to work in person around medically vulnerable people. Who should decide whether that is allowed?",
+        options: [
+          ["The employee; medical choices should remain private and voluntary.", {individual: 3, consent: 1}],
+          ["The vulnerable people, whose health is most directly at risk.", {affected: 3, rights: 1}],
+          ["Public-health experts applying the best available evidence.", {experts: 3, institutions: 1}],
+          ["Elected officials accountable to the whole public.", {majority: 2, institutions: 2}]
+        ]
+      },
+      {
+        text: "Two competent adults agree to an arrangement that many people consider exploitative. No deception or force is evident. Should outsiders stop it?",
+        options: [
+          ["No. Informed adults have authority over their own choices.", {individual: 3, consent: 3}],
+          ["Only if strong evidence shows that the arrangement causes serious harm.", {experts: 2, individual: 1, rights: 1}],
+          ["Yes, if democratic law has determined that such arrangements are inherently abusive.", {majority: 2, institutions: 2}],
+          ["The people most familiar with the participants should assess whether the consent is genuine.", {affected: 2, community: 2}]
+        ]
+      },
+      {
+        text: "An Indigenous community's tradition conflicts with a national law intended to protect individual equality. Which should prevail?",
+        options: [
+          ["The community's right to govern itself and preserve its culture.", {community: 3, affected: 1}],
+          ["The national law; equal rights cannot depend on where someone lives.", {rights: 3, institutions: 2}],
+          ["The wishes of the individual community members directly affected.", {affected: 3, individual: 2}],
+          ["A negotiated settlement rather than either side imposing a decision.", {consent: 3, community: 1}]
+        ]
+      },
+      {
+        text: "A jury acquits someone, but newly developed forensic evidence strongly indicates guilt. What should matter most?",
+        options: [
+          ["The final verdict; institutions become meaningless if settled outcomes can always be reopened.", {institutions: 3, rights: 1}],
+          ["The new evidence; accuracy matters more than procedural finality.", {experts: 3, affected: 1}],
+          ["The accused's protection against being tried repeatedly by the state.", {rights: 3, individual: 1}],
+          ["The victim or victim's family should decide whether the case is reopened.", {affected: 3, community: 1}]
+        ]
+      },
+      {
+        text: "Residents vote to install extensive public surveillance after a rise in crime. A minority objects on privacy grounds. What should happen?",
+        options: [
+          ["Implement it; the majority chose greater collective security.", {majority: 3, community: 1}],
+          ["Reject it; privacy is a right that majorities should not be able to vote away.", {rights: 3, individual: 2}],
+          ["Let independent researchers determine whether it actually improves safety.", {experts: 3, institutions: 1}],
+          ["Use it only in narrowly defined places where affected residents consent.", {consent: 2, affected: 2}]
+        ]
+      },
+      {
+        text: "A terminally ill adult wants help ending their life, but the law forbids it. Whose judgment should prevail?",
+        options: [
+          ["The individual, provided the request is informed and voluntary.", {individual: 3, consent: 2}],
+          ["Medical specialists, after assessing capacity, prognosis, and alternatives.", {experts: 3, individual: 1}],
+          ["The law, until the public changes it through the democratic process.", {institutions: 2, majority: 2}],
+          ["A universal right to life, even against the individual's present wishes.", {rights: 3, institutions: 1}]
+        ]
+      },
+      {
+        text: "A school district is choosing what version of a disputed historical event to teach. Who should control the curriculum?",
+        options: [
+          ["Subject-matter scholars using the strongest available evidence.", {experts: 3}],
+          ["Locally elected school boards, accountable to parents and residents.", {majority: 2, community: 2}],
+          ["Teachers and students in each classroom.", {affected: 2, individual: 2}],
+          ["National educational institutions enforcing consistent standards.", {institutions: 3, experts: 1}]
+        ]
+      },
+      {
+        text: "A worker publicly reveals illegal conduct by their employer after internal reporting fails. The disclosure also exposes private information. Who should judge whether it was justified?",
+        options: [
+          ["The worker, who must follow their own conscience when institutions fail.", {individual: 3, rights: 1}],
+          ["A court balancing public interest, privacy, and the law.", {institutions: 3, rights: 1}],
+          ["The people harmed by the illegal conduct and by the disclosure.", {affected: 3}],
+          ["Independent experts who can assess the evidence and actual consequences.", {experts: 3}]
+        ]
+      },
+      {
+        text: "A city wants to ban a dangerous recreational activity whose participants mainly risk harming themselves. Is that legitimate?",
+        options: [
+          ["No. Adults may accept risks to their own bodies.", {individual: 3, rights: 1}],
+          ["Yes, if most voters decide the risks and public costs are unacceptable.", {majority: 3}],
+          ["Only if safety experts find that participants cannot realistically understand or contain the risk.", {experts: 3, affected: 1}],
+          ["The activity should be allowed in communities willing to host it under locally chosen rules.", {community: 3, consent: 1}]
+        ]
+      },
+      {
+        text: "An algorithm distributes a scarce public benefit more consistently than human officials, but nobody can fully explain its decisions. Should it be used?",
+        options: [
+          ["Yes, if testing shows that its outcomes are fairer and more accurate.", {experts: 3, institutions: 1}],
+          ["No. Affected people have a right to understand and challenge decisions about them.", {affected: 2, rights: 3}],
+          ["Only if elected representatives approve its rules and remain accountable.", {majority: 2, institutions: 2}],
+          ["Let applicants choose between algorithmic and human review.", {individual: 2, consent: 3}]
+        ]
+      },
+      {
+        text: "A peaceful group wants to permanently leave conventional society and create an isolated settlement. Children will be raised there. Should the state intervene?",
+        options: [
+          ["No, unless there is evidence of abuse or people are prevented from leaving.", {individual: 2, consent: 3, rights: 1}],
+          ["Yes. Children are entitled to education and opportunities beyond their parents' worldview.", {rights: 3, institutions: 2}],
+          ["Only after child-development and welfare experts assess the settlement.", {experts: 3, affected: 1}],
+          ["The settlement should establish its own rules as a self-governing community.", {community: 3}]
+        ]
+      },
+      {
+        text: "A country can prevent severe economic harm only by breaking a treaty its previous government voluntarily signed. What should guide the decision?",
+        options: [
+          ["Honor the agreement; voluntary commitments mean little if they disappear when inconvenient.", {consent: 3, institutions: 1}],
+          ["Protect the people now affected, who did not personally consent to the treaty.", {affected: 3, individual: 1}],
+          ["Hold a public vote and accept the result.", {majority: 3}],
+          ["Follow international institutions and established legal processes.", {institutions: 3, rights: 1}]
+        ]
+      },
+      {
+        text: "When no option protects everyone, which rule should usually break the tie?",
+        options: [
+          ["Leave the decision with each individual whenever possible.", {individual: 3}],
+          ["Give the greatest voice to those who bear the consequences.", {affected: 3}],
+          ["Choose the option best supported by evidence and relevant expertise.", {experts: 3}],
+          ["Use fair, democratically accountable rules that apply to everyone.", {majority: 2, institutions: 2}],
+          ["Protect fundamental rights, even from popular or beneficial violations.", {rights: 3}],
+          ["Seek a voluntary arrangement rather than forcing a winner.", {consent: 3}]
+        ]
+      }
+    ];
+
+    const profiles = {
+      autonomy: {
+        name: "Autonomy-First Individualist",
+        summary: "You begin with the presumption that competent people own their bodies, identities, beliefs, and life choices. Authority must justify interfering with an individual—not require the individual to justify being free.",
+        principle: "The person living a life should normally control it.",
+        blindspot: "Formally voluntary choices can still be shaped by desperation, manipulation, unequal power, or consequences imposed on other people."
+      },
+      stakeholder: {
+        name: "Stakeholder Sovereigntist",
+        summary: "You believe legitimate authority belongs primarily to the people who will actually live with a decision. Distance weakens authority: neither outsiders, abstract majorities, nor insulated officials should overrule those carrying the consequences without compelling reason.",
+        principle: "Voice should be proportional to impact.",
+        blindspot: "The most affected group can overlook outsiders, future people, or vulnerable minorities within its own ranks."
+      },
+      evidence: {
+        name: "Evidence-Led Pragmatist",
+        summary: "You give substantial authority to demonstrated knowledge, relevant competence, and measurable consequences. You do not think sincerity, popularity, or tradition can settle factual questions.",
+        principle: "Decisions should answer to reality.",
+        blindspot: "Experts can identify facts and likely outcomes, but expertise alone cannot determine which values or sacrifices everyone must accept."
+      },
+      democrat: {
+        name: "Democratic Legitimist",
+        summary: "You trust broadly shared, accountable decision-making more than private power or self-appointed authorities. When people must live under one rule, you generally want them to have an equal political voice in creating it.",
+        principle: "Collective rules require collective authorization.",
+        blindspot: "A fair vote can still produce an unjust result, especially when a durable majority controls the rights of a less powerful minority."
+      },
+      localist: {
+        name: "Community Self-Governor",
+        summary: "You favor decisions made by real communities with shared context, relationships, and responsibility. Local knowledge and cultural self-determination matter more to you than distant uniformity.",
+        principle: "Power should remain close to the people it governs.",
+        blindspot: "Local control can protect community autonomy while trapping dissenters inside oppressive customs or limiting rights by geography."
+      },
+      institutionalist: {
+        name: "Rule-of-Law Institutionalist",
+        summary: "You value stable procedures, accountable offices, review, and consistent rules. Good institutions restrain arbitrary personal power and allow disputes to be resolved without making every conflict a raw contest of influence.",
+        principle: "Legitimate procedures protect people from arbitrary decisions.",
+        blindspot: "Institutions can preserve injustice, mistake consistency for fairness, and protect their own authority long after public trust is deserved."
+      },
+      voluntarist: {
+        name: "Consent-Based Voluntarist",
+        summary: "You see genuine agreement as the cleanest foundation for authority. You prefer negotiated, opt-in arrangements and freedom of exit over commands imposed by officials, communities, or majorities.",
+        principle: "No one should be bound without meaningful consent.",
+        blindspot: "Consent is not always meaningful when options are scarce, bargaining power is unequal, or leaving carries an unbearable cost."
+      },
+      rights: {
+        name: "Rights-First Universalist",
+        summary: "You believe some protections should stand above preference, popularity, geography, and immediate advantage. Legitimate authority is constrained by principles that apply even when violating them would be convenient or widely supported.",
+        principle: "Some boundaries must not be crossed, even by a majority.",
+        blindspot: "Rights can conflict with one another, and supposedly universal principles may conceal cultural assumptions or avoid difficult questions of implementation."
+      },
+      pluralist: {
+        name: "Authority Pluralist",
+        summary: "You resist granting permanent supremacy to any single decision-maker. Individuals, affected parties, experts, democratic bodies, and rights all have legitimate claims in different circumstances; good judgment comes from balancing them without turning one into an absolute.",
+        principle: "Authority should follow the nature of the decision.",
+        blindspot: "Balancing every claim can become indecisive or allow powerful actors to redefine the process whenever they dislike the likely outcome."
+      },
+      skeptic: {
+        name: "Anti-Domination Skeptic",
+        summary: "Your answers show stronger trust in individuals, affected people, consent, and rights than in centralized majorities or formal institutions. Your concern is not merely who decides, but whether anyone has acquired enough power to dominate someone else.",
+        principle: "Authority is most dangerous when the people subject to it cannot refuse, challenge, or escape it.",
+        blindspot: "Dispersing authority can also disperse accountability and make coordinated action difficult when harms cross personal or local boundaries."
+      }
+    };
+
+    const form = document.getElementById("quiz");
+    const results = document.getElementById("results");
+    const error = document.getElementById("error");
+    const barEl = document.getElementById("bar");
+    const progressCount = document.getElementById("progressCount");
+    const labels = sources;
+
+    let currentIndex = 0;
+    let transitioning = false;
+    const answers = {};
+
+    function renderQuiz() {
+      form.innerHTML = "";
+      questions.forEach((question, questionIndex) => {
+        const sec = document.createElement("section");
+        sec.className = "mq-q" + (questionIndex === 0 ? " is-active is-enter" : "");
+        sec.dataset.index = String(questionIndex);
+        if (questionIndex !== 0) sec.hidden = true;
+
+        const h2 = document.createElement("h2");
+        h2.className = "mq-q-title";
+        h2.textContent = question.text;
+        sec.appendChild(h2);
+
+        const opts = document.createElement("div");
+        opts.className = "mq-options";
+        question.options.forEach((option, optionIndex) => {
+          const id = "q" + questionIndex + "_opt" + optionIndex;
+          const label = document.createElement("label");
+          label.className = "mq-option";
+          label.setAttribute("for", id);
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = "q" + questionIndex;
+          input.id = id;
+          input.value = String(optionIndex);
+          const span = document.createElement("span");
+          span.textContent = option[0];
+          label.append(input, span);
+          input.addEventListener("change", () => {
+            answers[questionIndex] = optionIndex;
+            opts.querySelectorAll(".mq-option").forEach((el) => el.classList.remove("is-selected"));
+            label.classList.add("is-selected");
+            error.classList.remove("is-visible");
+            error.textContent = "";
+          });
+          opts.appendChild(label);
+        });
+        sec.appendChild(opts);
+
+        const nav = document.createElement("div");
+        nav.className = "mq-nav";
+        const back = document.createElement("button");
+        back.type = "button";
+        back.className = "mq-btn-secondary";
+        back.textContent = "Back";
+        back.disabled = questionIndex === 0;
+        back.addEventListener("click", () => goto(questionIndex - 1));
+        const next = document.createElement("button");
+        next.type = "button";
+        next.textContent = questionIndex === questions.length - 1 ? "See results" : "Next";
+        next.addEventListener("click", () => {
+          const checked = form.querySelector('input[name="q' + questionIndex + '"]:checked');
+          if (!checked) {
+            error.textContent = "Please choose an option to continue.";
+            error.classList.add("is-visible");
+            return;
+          }
+          answers[questionIndex] = Number(checked.value);
+          if (questionIndex === questions.length - 1) {
+            showResults(calculateScores());
+          } else {
+            goto(questionIndex + 1);
+          }
+        });
+        nav.append(back, next);
+        sec.appendChild(nav);
+        form.appendChild(sec);
+      });
+      updateProgress(0);
+    }
+
+    function goto(i) {
+      const total = questions.length;
+      if (i < 0) i = 0;
+      if (i >= total) i = total - 1;
+      if (transitioning || i === currentIndex) return;
+      const from = form.querySelector('.mq-q[data-index="' + currentIndex + '"]');
+      const to = form.querySelector('.mq-q[data-index="' + i + '"]');
+      transitioning = true;
+      currentIndex = i;
+      MQ.stageQuestion(from, to, {
+        onDone: () => {
+          transitioning = false;
+          to.querySelector('input[type="radio"]')?.focus();
+        },
+      });
+      updateProgress(i);
+    }
+
+    function updateProgress(idx) {
+      MQ.setProgress(barEl, (idx / questions.length) * 100);
+      progressCount.textContent = (idx + 1) + " / " + questions.length;
+    }
+
+    function calculateScores() {
+      const scores = Object.fromEntries(Object.keys(labels).map((key) => [key, 0]));
+      questions.forEach((question, questionIndex) => {
+        const selected = form.querySelector('input[name="q' + questionIndex + '"]:checked');
+        const weights = question.options[Number(selected.value)][1];
+        Object.entries(weights).forEach(([key, points]) => (scores[key] += points));
+      });
+      return scores;
+    }
+
+function chooseProfile(scores) {
+      const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const [first, second] = ranked;
+      const spread = first[1] - ranked[ranked.length - 1][1];
+
+      if (spread <= 6 || first[1] - second[1] <= 1 && ranked[2][1] >= first[1] - 3) return profiles.pluralist;
+
+      const decentralized = scores.individual + scores.affected + scores.consent + scores.rights;
+      const centralized = scores.majority + scores.institutions + scores.experts + scores.community;
+      if (decentralized - centralized >= 22 && scores.individual + scores.consent >= scores.rights + scores.affected) {
+        return profiles.skeptic;
+      }
+
+      const profileMap = {
+        individual: profiles.autonomy,
+        affected: profiles.stakeholder,
+        experts: profiles.evidence,
+        majority: profiles.democrat,
+        community: profiles.localist,
+        institutions: profiles.institutionalist,
+        consent: profiles.voluntarist,
+        rights: profiles.rights
+      };
+      return profileMap[first[0]];
+    }
+
+    function showResults(scores) {
+      const profile = chooseProfile(scores);
+      const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const max = Math.max(...Object.values(scores), 1);
+
+      document.getElementById("result-name").textContent = profile.name;
+      document.getElementById("result-summary").textContent = profile.summary;
+      document.getElementById("result-principle").textContent = profile.principle;
+      document.getElementById("result-blindspot").textContent = profile.blindspot;
+
+      const bars = document.getElementById("score-bars");
+      bars.innerHTML = ranked
+        .map(([key, score], i) => {
+          const pct = Math.round((score / max) * 100);
+          return (
+            '<div class="mq-rank-row' +
+            (i === 0 ? " is-top" : "") +
+            '">' +
+            '<div class="mq-rank-name">' +
+            labels[key] +
+            "</div>" +
+            '<div class="mq-rank-track"><span class="mq-rank-fill" data-width="' +
+            pct +
+            '%"></span></div>' +
+            '<div class="mq-rank-pct">' +
+            score +
+            "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+
+      const topNames = ranked.slice(0, 3).map(([key]) => labels[key]);
+      const bottomName = labels[ranked[ranked.length - 1][0]];
+      document.getElementById("score-explanation").textContent =
+        `You placed the greatest trust in ${topNames[0]}, followed by ${topNames[1]} and ${topNames[2]}. ` +
+        `${bottomName} received the least weight. Scores are relative preferences, not percentages; a low score means you selected that source less often when it competed with the others.`;
+
+      form.style.display = "none";
+      results.hidden = false;
+      results.classList.add("is-visible");
+      MQ.setProgress(barEl, 100);
+      progressCount.textContent = questions.length + " / " + questions.length;
+      MQ.staggerReveal(bars);
+      results.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    document.getElementById("restart").addEventListener("click", () => {
+      Object.keys(answers).forEach((k) => delete answers[k]);
+      form.querySelectorAll('input[type="radio"]').forEach((r) => (r.checked = false));
+      form.querySelectorAll(".mq-option").forEach((el) => el.classList.remove("is-selected"));
+      results.hidden = true;
+      results.classList.remove("is-visible");
+      form.style.display = "block";
+      currentIndex = 0;
+      form.querySelectorAll(".mq-q").forEach((q, idx) => {
+        q.classList.toggle("is-active", idx === 0);
+        q.classList.remove("is-exit");
+        q.hidden = idx !== 0;
+        if (idx === 0) {
+          q.classList.remove("is-enter");
+          void q.offsetWidth;
+          q.classList.add("is-enter");
+        }
+      });
+      error.textContent = "";
+      error.classList.remove("is-visible");
+      updateProgress(0);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    renderQuiz();
+  </script>
+</body>
+</html>

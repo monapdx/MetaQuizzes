@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Humor DNA — MetaQuizzes</title>
+  <link rel="stylesheet" href="../shared/ink-night.css" />
+</head>
+<body class="mq">
+  <div class="mq-bg" aria-hidden="true"></div>
+
+  <header class="mq-top">
+    <a class="mq-brand" href="../index.html">MetaQuizzes</a>
+    <span class="mq-quiz-label">Humor DNA</span>
+  </header>
+
+  <main class="mq-stage">
+    <h1>What’s your Humor DNA?</h1>
+    <p class="mq-lede">A 20-question visual quiz that maps your humor spectrum.</p>
+
+    <div class="mq-progress">
+      <div class="mq-progress-meta">
+        <span class="mq-section-label">Progress</span>
+        <span class="mq-progress-count" id="progressText">Question 1 / 20</span>
+      </div>
+      <div class="mq-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="mq-progress-fill" id="progressFill"></span>
+      </div>
+    </div>
+
+    <div class="mq-panel">
+      <div id="quiz" class="mq-stage-inner"></div>
+
+      <div class="mq-controls" id="controls">
+        <button id="skipBtn" type="button" class="mq-btn-secondary" title="Skip this question">Skip</button>
+        <button id="retakeBtn" type="button" class="mq-btn-secondary mq-hidden">Retake quiz</button>
+      </div>
+
+      <div id="result" class="mq-hidden"></div>
+
+      <p class="mq-foot" id="tip">Tip: click any image to answer — your next question loads automatically.</p>
+    </div>
+  </main>
+
+  <script src="../shared/quiz-ui.js"></script>
+  <script>
+const HUMOR_PROFILES = {
+  DH: {
+    title: "Dark Humor",
+    tagline: "You laugh where angels fear to tread.",
+    desc: "You’re unfazed by taboo topics, and you enjoy jokes that dance on the edge. Timing and moral contrast make it land—shock is the spice, not the meal.",
+    people: ["Anthony Jeselnik", "Nikki Glaser", "Jordan Peele"],
+    pop: ["The Lobster", "Barry", "South Park", "In Bruges"]
+  },
+  SH: {
+    title: "Sarcastic / Dry",
+    tagline: "Deadpan delivery. Maximum sting.",
+    desc: "You favor razor-edged wit and bone-dry understatement. The joke is in the attitude—and the perfectly placed eye roll.",
+    people: ["Aubrey Plaza", "Stephen Colbert", "Ricky Gervais"],
+    pop: ["Veep", "The Office", "Daria", "What We Do in the Shadows"]
+  },
+  WH: {
+    title: "Whimsical / Absurd",
+    tagline: "Logic optional. Delight mandatory.",
+    desc: "Word-tilting silliness and earnest oddity make you cackle. You love left-turn premises and clever, innocent ridiculousness.",
+    people: ["Taika Waititi", "Bo Burnham", "John Cleese"],
+    pop: ["Monty Python", "Grand Budapest Hotel", "Napoleon Dynamite", "SpongeBob"]
+  },
+  PH: {
+    title: "Physical / Slapstick",
+    tagline: "Comedy is a contact sport.",
+    desc: "You laugh loudest at kinetic chaos—falls, flubs, and visual gags. Timing, faces, and bodies doing very silly things.",
+    people: ["Jim Carrey", "Melissa McCarthy", "Rowan Atkinson"],
+    pop: ["Ted", "The Nice Guys", "Mr. Bean", "Hot Fuzz"]
+  },
+  WP: {
+    title: "Wordplay / Clever",
+    tagline: "Pun with intent.",
+    desc: "Language gymnastics, layered callbacks, and precision phrasing. You love jokes you can replay in your head and still find new gears.",
+    people: ["John Mulaney", "Tina Fey", "Demetri Martin"],
+    pop: ["Arrested Development (early)", "The Good Place", "Taskmaster"]
+  },
+  SA: {
+    title: "Satirical / Political",
+    tagline: "Punching up is an art form.",
+    desc: "You like your laughs with teeth. You enjoy comedy that exposes hypocrisy, power games, and social absurdities.",
+    people: ["George Carlin", "Samantha Bee", "Hasan Minhaj"],
+    pop: ["Veep", "Dr. Strangelove", "Don’t Look Up", "South Park"]
+  },
+  SD: {
+    title: "Self-Deprecating",
+    tagline: "First target: me.",
+    desc: "Disarming honesty and playful vulnerability are your sweet spot. The joke’s on you—but never mean-spirited.",
+    people: ["Ali Wong", "John Mulaney", "Taylor Tomlinson"],
+    pop: ["The Office (Michael)", "Fleabag", "Pen15"]
+  },
+  SU: {
+    title: "Surreal / Nonsense",
+    tagline: "You vibe with the dream logic.",
+    desc: "You enjoy humor that feels like a fever dream: odd juxtapositions, non sequiturs, and impossible rules played straight.",
+    people: ["Eric Andre", "Tim & Eric", "Noel Fielding"],
+    pop: ["I Think You Should Leave", "Monty Python", "SpongeBob (deep cuts)"]
+  }
+};
+
+const quizData = [
+  {
+    q: "Which of these TV shows makes you laugh the most?",
+    options: [
+      { img: "img/the-office.png", label: "The Office", types: ["SH","SD"] },
+      { img: "img/southpark.png", label: "South Park", types: ["DH","SA"] },
+      { img: "img/veep.png", label: "Veep", types: ["SH","SA"] },
+      { img: "img/spongebob.png", label: "SpongeBob SquarePants", types: ["WH","SU"] }
+    ]
+  },
+  {
+    q: "Pick the comedian you’d rather see live.",
+    options: [
+      { img: "img/bo-burnham.png", label: "Bo Burnham", types: ["WH","SD"] },
+      { img: "img/tina-fey.png", label: "Tina Fey", types: ["WP","SA"] },
+      { img: "img/chappelle.png", label: "Dave Chappelle", types: ["DH","SA"] },
+      { img: "img/jim-carrey.png", label: "Jim Carrey", types: ["PH","SU"] }
+    ]
+  },
+  {
+    q: "Choose your favorite one-liner.",
+    options: [
+      { img: "img/gradient-bg.png", label: "I'm not superstitious, but I am a little stitious.", types: ["SH"] },
+      { img: "img/gradient-bg.png", label: "I told my wife she should embrace her mistakes — she hugged me.", types: ["SD"] },
+      { img: "img/gradient-bg.png", label: "Life is a soup and I'm a fork.", types: ["WH","SU"] },
+      { img: "img/gradient-bg.png", label: "I'm not lazy, I'm on energy-saving mode.", types: ["WP","SD"] }
+    ]
+  },
+  {
+    q: "Which meme makes you laugh more?",
+    options: [
+      { img: "img/distracted-boyfriend.png", label: "Distracted Boyfriend", types: ["SH"] },
+      { img: "img/doge.png", label: "Doge", types: ["WH"] },
+      { img: "img/fine.png", label: "This is fine.", types: ["DH","SD"] },
+      { img: "img/leonardo-cheers.png", label: "Leonardo Cheers", types: ["WP","SH"] }
+    ]
+  },
+  {
+    q: "Pick the movie you’d most likely quote.",
+    options: [
+      { img: "img/the-menu.png", label: "The Menu", types: ["SH"] },
+      { img: "img/grand-budapest-hotel.png", label: "The Grand Budapest Hotel", types: ["WH","SU"] },
+      { img: "img/ted.png", label: "Ted", types: ["PH"] },
+      { img: "img/lobster.png", label: "The Lobster", types: ["SA","DH"] }
+    ]
+  },
+  {
+    q: "Your ideal comedy night includes:",
+    options: [
+      { img: "img/gradient-bg.png", label: "Stand-up", types: ["SH","SA"] },
+      { img: "img/gradient-bg.png", label: "Improv", types: ["PH","WH"] },
+      { img: "img/gradient-bg.png", label: "Satire Show", types: ["SA","DH"] },
+      { img: "img/gradient-bg.png", label: "Sketch Comedy", types: ["WP","SU"] }
+    ]
+  },
+  {
+    q: "Which situation would make you laugh the hardest?",
+    options: [
+      { img: "img/gradient-bg.png", label: "A friend falls off a chair", types: ["PH"] },
+      { img: "img/gradient-bg.png", label: "A ridiculous misunderstanding", types: ["WH"] },
+      { img: "img/gradient-bg.png", label: "A sarcastic burn", types: ["SH"] },
+      { img: "img/gradient-bg.png", label: "A wild coincidence", types: ["WP"] }
+    ]
+  },
+  {
+    q: "Pick a funny animal video.",
+    options: [
+      { img: "img/silly-cat.gif", label: "Cat knocking things off a counter", types: ["PH"] },
+      { img: "img/dog-costume.png", label: "Dog wearing sunglasses", types: ["WH"] },
+      { img: "img/monkey.gif", label: "Monkey pranking tourists", types: ["PH","SH"] },
+      { img: "img/laughing-goat.gif", label: "Goat yelling", types: ["SU"] }
+    ]
+  },
+  {
+    q: "Choose your favorite comedy era.",
+    options: [
+      { img: "img/gradient-bg.png", label: "Classic slapstick (Charlie Chaplin)", types: ["PH"] },
+      { img: "img/gradient-bg.png", label: "90s sitcoms", types: ["SH"] },
+      { img: "img/gradient-bg.png", label: "Modern stand-up (Netflix era)", types: ["SA","SD"] },
+      { img: "img/gradient-bg.png", label: "Internet memes", types: ["WH","SU"] }
+    ]
+  },
+  {
+    q: "Which quote describes your sense of humor best?",
+    options: [
+      { img: "img/gradient-bg.png", label: "If you can't laugh at yourself, I'll do it for you.", types: ["SD"] },
+      { img: "img/gradient-bg.png", label: "I find joy in the absurd.", types: ["WH","SU"] },
+      { img: "img/gradient-bg.png", label: "Sarcasm is my love language.", types: ["SH"] },
+      { img: "img/gradient-bg.png", label: "Dark humor is like food — not everyone gets it.", types: ["DH"] }
+    ]
+  },
+  {
+    q: "Which comedian’s special would you rewatch?",
+    options: [
+      { img: "img/carlin.png", label: "George Carlin", types: ["SA","DH"] },
+      { img: "img/ali-wong.png", label: "Ali Wong", types: ["SD","SH"] },
+      { img: "img/eddie-izzard.png", label: "Eddie Izzard", types: ["SH","SA"] },
+      { img: "img/gaffigan.png", label: "Jim Gaffigan", types: ["WP","SD"] }
+    ]
+  },
+  {
+    q: "Pick a GIF that matches your laugh style.",
+    options: [
+      { img: "img/facepalm.gif", label: "Facepalm", types: ["SH"] },
+      { img: "img/goodfellas-laughing.gif", label: "Uncontrollable laughter", types: ["PH"] },
+      { img: "img/judge-judy-eyeroll.gif", label: "Eye roll", types: ["SH","SD"] },
+      { img: "img/smirk.gif", label: "Subtle smirk", types: ["SD"] }
+    ]
+  },
+  {
+    q: "Which fictional character cracks you up the most?",
+    options: [
+      { img: "img/michael-scott.png", label: "Michael Scott (The Office)", types: ["SD","SH"] },
+      { img: "img/daria.png", label: "Daria Morgendorffer (Daria)", types: ["SH"] },
+      { img: "img/deadpool.png", label: "Deadpool", types: ["DH","WP"] },
+      { img: "img/selina.png", label: "Selina Meyer (Veep)", types: ["SH","SA"] }
+    ]
+  },
+  {
+    q: "Pick a kind of joke.",
+    options: [
+      { img: "img/gradient-bg.png", label: "Pun", types: ["WP"] },
+      { img: "img/gradient-bg.png", label: "Sarcastic remark", types: ["SH"] },
+      { img: "img/gradient-bg.png", label: "Absurd scenario", types: ["WH"] },
+      { img: "img/gradient-bg.png", label: "Political roast", types: ["SA"] }
+    ]
+  },
+  {
+    q: "How do you react when someone falls in public?",
+    options: [
+      { img: "img/gradient-bg.png", label: "Laugh immediately", types: ["PH"] },
+      { img: "img/gradient-bg.png", label: "Wait to see if they’re okay first", types: ["SD"] },
+      { img: "img/gradient-bg.png", label: "Pretend not to laugh", types: ["SH"] },
+      { img: "img/gradient-bg.png", label: "Make a joke to ease the tension", types: ["WP"] }
+    ]
+  },
+  {
+    q: "Your favorite internet humor type:",
+    options: [
+      { img: "img/gradient-bg.png", label: "Dark memes", types: ["DH"] },
+      { img: "img/gradient-bg.png", label: "Wholesome memes", types: ["SD","WH"] },
+      { img: "img/gradient-bg.png", label: "Weirdcore memes", types: ["SU","WH"] },
+      { img: "img/gradient-bg.png", label: "Sarcastic tweets", types: ["SH"] }
+    ]
+  },
+  {
+    q: "If you wrote a joke book, it would be titled:",
+    options: [
+      { img: "img/gradient-bg.png", label: "Oops, Too Soon?", types: ["DH"] },
+      { img: "img/gradient-bg.png", label: "Laughing at Myself", types: ["SD"] },
+      { img: "img/gradient-bg.png", label: "The Pun Stops Here", types: ["WP"] },
+      { img: "img/gradient-bg.png", label: "I Can’t Believe That’s Funny", types: ["WH"] }
+    ]
+  },
+  {
+    q: "What’s your reaction to dad jokes?",
+    options: [
+      { img: "img/gradient-bg.png", label: "I love them", types: ["WP"] },
+      { img: "img/gradient-bg.png", label: "I groan but secretly laugh", types: ["SD"] },
+      { img: "img/gradient-bg.png", label: "I roll my eyes", types: ["SH"] },
+      { img: "img/gradient-bg.png", label: "I wish I’d thought of that", types: ["WP"] }
+    ]
+  },
+  {
+    q: "Pick a comedy movie moment.",
+    options: [
+      { img: "img/ted-tammy.gif", label: "Ted Meets Tammy-Lynne", types: ["PH"] },
+      { img: "img/grand-budapest.gif", label: "Zero & M. Gustave Deliver Pastries", types: ["WH"] },
+      { img: "img/bathroom-stall.gif", label: "Bathroom Stall Scene (The Nice Guys)", types: ["PH","SD"] },
+      { img: "img/kicks-kids.gif", label: "Mildred Kicks High School Kids", types: ["SH"] }
+    ]
+  },
+  {
+    q: "Which word makes you laugh more?",
+    options: [
+      { img: "img/gradient-bg.png", label: "Moist", types: ["SD"] },
+      { img: "img/gradient-bg.png", label: "Flap", types: ["WH"] },
+      { img: "img/gradient-bg.png", label: "Boing", types: ["PH"] },
+      { img: "img/gradient-bg.png", label: "Pickle", types: ["SU"] }
+    ]
+  }
+];
+
+const quizEl = document.getElementById("quiz");
+const resultEl = document.getElementById("result");
+const skipBtn = document.getElementById("skipBtn");
+const retakeBtn = document.getElementById("retakeBtn");
+const progressText = document.getElementById("progressText");
+const progressFill = document.getElementById("progressFill");
+const tip = document.getElementById("tip");
+
+let current = 0;
+let scores = {DH:0,SH:0,WH:0,PH:0,WP:0,SA:0,SD:0,SU:0};
+let locking = false;
+const TOTAL_Q = quizData.length;
+
+function updateProgress() {
+  const shown = Math.min(current + 1, TOTAL_Q);
+  progressText.textContent = current < TOTAL_Q
+    ? `Question ${shown} / ${TOTAL_Q}`
+    : `Finished — ${TOTAL_Q} / ${TOTAL_Q}`;
+  const pct = Math.round((Math.min(current, TOTAL_Q) / TOTAL_Q) * 100);
+  MQ.setProgress(progressFill, pct);
+}
+
+function renderQuestion() {
+  if (current >= TOTAL_Q) return showResult();
+
+  resultEl.classList.add("mq-hidden");
+  retakeBtn.classList.add("mq-hidden");
+  skipBtn.classList.remove("mq-hidden");
+  tip.classList.remove("mq-hidden");
+  locking = false;
+
+  quizEl.innerHTML = "";
+  const qData = quizData[current];
+
+  const h2 = document.createElement("h2");
+  h2.className = "mq-q-title";
+  h2.style.textAlign = "center";
+  h2.textContent = qData.q;
+  quizEl.appendChild(h2);
+
+  const grid = document.createElement("div");
+  grid.className = "mq-option-grid";
+
+  qData.options.forEach((opt) => {
+    const card = document.createElement("div");
+    card.className = "mq-option-card";
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+    card.innerHTML =
+      `<img src="${opt.img}" alt="${opt.label}" onerror="this.style.opacity='0.35'">
+       <div class="mq-option-label">${opt.label}</div>`;
+    const handle = () => selectAnswer(opt, card);
+    card.addEventListener("click", handle);
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handle();
+      }
+    });
+    grid.appendChild(card);
+  });
+
+  quizEl.appendChild(grid);
+  MQ.pulseEnter(quizEl);
+  updateProgress();
+}
+
+function selectAnswer(opt, card) {
+  if (locking) return;
+  locking = true;
+  card.classList.add("is-selected");
+  opt.types.forEach((t) => {
+    if (scores[t] != null) scores[t] += 1;
+  });
+  const delay = MQ.reducedMotion ? 0 : 220;
+  window.setTimeout(() => {
+    current += 1;
+    renderQuestion();
+  }, delay);
+}
+
+function buildShareText(userName, topCode, secondCode, sorted, total) {
+  const top = HUMOR_PROFILES[topCode];
+  const runner = secondCode ? HUMOR_PROFILES[secondCode] : null;
+  const pct = (c) => Math.round((c / total) * 100);
+
+  const lines = [];
+  lines.push(`${userName ? userName + "’s" : "My"} Humor DNA`);
+  lines.push(`Top: ${top.title} — “${top.tagline}”`);
+  if (runner) lines.push(`Runner-up: ${runner.title}`);
+  lines.push(
+    "Spectrum: " +
+      sorted
+        .map(([k, v]) => `${HUMOR_PROFILES[k].title.split(" / ")[0]} ${pct(v)}%`)
+        .join(" · ")
+  );
+  return lines.join("\n");
+}
+
+function createHumorProfile(opts) {
+  const { userName = "Your", topCode, secondCode, curated } = opts;
+  const top = HUMOR_PROFILES[topCode];
+  const sec = secondCode ? HUMOR_PROFILES[secondCode] : null;
+  const curatedExamples = curated || {
+    primary: ["The Menu", "The Lobster", "Veep", "White Lotus"],
+    secondary: ["Grand Budapest Hotel", "Jojo Rabbit", "Hacks", "Shrinking"],
+    tertiary: ["Ted", "Game Night", "Silicon Valley"],
+  };
+
+  const profile = document.createElement("div");
+  profile.className = "mq-profile";
+  profile.innerHTML = `
+    <p class="mq-eyebrow">Profile</p>
+    <h3>${userName} Humor DNA</h3>
+    <p class="mq-tagline">“${top.tagline}”</p>
+    <div class="mq-chip-row">
+      <span class="mq-chip">${top.title}</span>
+      ${sec ? `<span class="mq-chip">Runner-up: ${sec.title}</span>` : ""}
+    </div>
+    <div class="mq-profile-grid">
+      <div class="mq-profile-block">
+        <h4>Core read</h4>
+        <p>${top.desc}</p>
+        ${
+          sec
+            ? `<p style="margin-top:0.5rem">You also score highly on <strong>${sec.title}</strong>, which blends into your primary style when the jokes punch up.</p>`
+            : ""
+        }
+      </div>
+      <div class="mq-profile-block">
+        <h4>Pop-culture compass</h4>
+        <dl class="mq-kv">
+          <dt>Primary</dt><dd>${curatedExamples.primary.join(" · ")}</dd>
+          <dt>Secondary</dt><dd>${curatedExamples.secondary.join(" · ")}</dd>
+          <dt>Tertiary</dt><dd>${curatedExamples.tertiary.join(" · ")}</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="mq-actions" style="margin-top:1rem">
+      <button type="button" id="copySummaryBtn">Copy summary</button>
+      <button type="button" class="mq-btn-secondary" id="scrollTopBtn">Scroll to top</button>
+    </div>`;
+
+  profile.querySelector("#copySummaryBtn").onclick = async () => {
+    const btn = profile.querySelector("#copySummaryBtn");
+    try {
+      const txt = buildShareText(
+        userName.replace(/’s$/, ""),
+        topCode,
+        secondCode,
+        opts.sorted,
+        opts.total
+      );
+      await navigator.clipboard.writeText(txt);
+      btn.textContent = "Copied!";
+      setTimeout(() => (btn.textContent = "Copy summary"), 1200);
+    } catch (e) {
+      btn.textContent = "Copy failed";
+      setTimeout(() => (btn.textContent = "Copy summary"), 1200);
+    }
+  };
+  profile.querySelector("#scrollTopBtn").onclick = () =>
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+  return profile;
+}
+
+function showResult() {
+  quizEl.innerHTML = "";
+  resultEl.classList.remove("mq-hidden");
+  skipBtn.classList.add("mq-hidden");
+  tip.classList.add("mq-hidden");
+
+  const entries = Object.entries(scores);
+  const total = entries.reduce((s, [, v]) => s + v, 0) || 1;
+  const sorted = entries.sort((a, b) => b[1] - a[1]);
+  const [topCode, topScore] = sorted[0];
+  const second = sorted[1] || [null, 0];
+
+  const wrap = document.createElement("div");
+  wrap.className = "mq-results is-visible";
+  wrap.style.display = "block";
+
+  const prof = HUMOR_PROFILES[topCode];
+  const pctTop = Math.round((topScore / total) * 100);
+
+  const top = document.createElement("div");
+  top.className = "mq-result-hero";
+  top.innerHTML = `
+    <p class="mq-eyebrow">Your dominant humor type</p>
+    <h3>${prof.title}</h3>
+    <p class="mq-tagline">“${prof.tagline}”</p>
+    <p>${prof.desc}</p>
+    <div class="mq-chip-row">
+      <span class="mq-chip"><strong>People:</strong> ${prof.people.join(", ")}</span>
+      <span class="mq-chip"><strong>Pop culture:</strong> ${prof.pop.join(", ")}</span>
+    </div>
+    <p class="mq-muted" style="margin:0.65rem 0 0">Top score: ${pctTop}% (${topScore} of ${total} points)</p>`;
+  wrap.appendChild(top);
+
+  if (second[1] > 0) {
+    const diff = topScore - second[1];
+    const close = diff <= Math.max(2, Math.ceil(0.08 * total));
+    if (close) {
+      const r = HUMOR_PROFILES[second[0]];
+      const pct2 = Math.round((second[1] / total) * 100);
+      const runner = document.createElement("div");
+      runner.className = "mq-result-hero";
+      runner.innerHTML = `
+        <p class="mq-eyebrow">Runner-up (strong secondary)</p>
+        <h3>${r.title}</h3>
+        <p class="mq-tagline">“${r.tagline}”</p>
+        <p>${r.desc}</p>
+        <p class="mq-muted" style="margin:0.65rem 0 0">Score: ${pct2}% (${second[1]} of ${total})</p>`;
+      wrap.appendChild(runner);
+    }
+  }
+
+  const header = document.createElement("h3");
+  header.className = "mq-subsection-title";
+  header.style.marginTop = "1.25rem";
+  header.textContent = "Your humor spectrum";
+  wrap.appendChild(header);
+
+  const list = document.createElement("div");
+  list.className = "mq-rank-list";
+
+  sorted.forEach(([code, val], i) => {
+    const pct = Math.round((val / total) * 100);
+    const row = document.createElement("div");
+    row.className = "mq-rank-row" + (i === 0 ? " is-top" : "");
+    row.innerHTML = `
+      <div class="mq-rank-name">${HUMOR_PROFILES[code].title}</div>
+      <div class="mq-rank-track"><span class="mq-rank-fill" data-width="${pct}%"></span></div>
+      <div class="mq-rank-pct">${pct}%</div>`;
+    list.appendChild(row);
+  });
+  wrap.appendChild(list);
+
+  wrap.appendChild(
+    createHumorProfile({
+      userName: "Your",
+      topCode,
+      secondCode: second[0],
+      sorted,
+      total,
+      curated: {
+        primary: ["The Menu", "The Lobster", "Veep", "White Lotus"],
+        secondary: ["Grand Budapest Hotel", "Jojo Rabbit", "Hacks", "Shrinking"],
+        tertiary: ["Ted", "Game Night", "Silicon Valley"],
+      },
+    })
+  );
+
+  retakeBtn.classList.remove("mq-hidden");
+  retakeBtn.onclick = () => {
+    current = 0;
+    scores = { DH: 0, SH: 0, WH: 0, PH: 0, WP: 0, SA: 0, SD: 0, SU: 0 };
+    MQ.setProgress(progressFill, 0);
+    resultEl.classList.add("mq-hidden");
+    updateProgress();
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  resultEl.innerHTML = "";
+  resultEl.appendChild(wrap);
+  MQ.staggerReveal(list);
+  updateProgress();
+}
+
+skipBtn.addEventListener("click", () => {
+  if (locking) return;
+  current += 1;
+  renderQuestion();
+});
+
+renderQuestion();
+  </script>
+</body>
+</html>

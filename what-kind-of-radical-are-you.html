@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>What Kind of Radical Are You? — MetaQuizzes</title>
+  <link rel="stylesheet" href="shared/ink-night.css" />
+</head>
+<body class="mq">
+  <div class="mq-bg" aria-hidden="true"></div>
+
+  <header class="mq-top">
+    <a class="mq-brand" href="index.html">MetaQuizzes</a>
+    <span class="mq-quiz-label">Radicalism</span>
+  </header>
+
+  <main class="mq-stage">
+    <h1>What kind of radical are you?</h1>
+    <p class="mq-lede">Radicals agree that surface-level change is not enough. They disagree about what must change, how power moves, and what should replace the present system. Choose the answer closest to your actual instincts.</p>
+
+    <div class="mq-progress">
+      <div class="mq-progress-meta">
+        <span class="mq-section-label">Question</span>
+        <span class="mq-progress-count" id="progressCount">1 / 1</span>
+      </div>
+      <div class="mq-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="mq-progress-fill" id="bar"></span>
+      </div>
+    </div>
+
+    <div class="mq-panel" aria-live="polite">
+      <form id="quiz" novalidate></form>
+      <p class="mq-err" id="error" role="alert"></p>
+
+      <section class="mq-results" id="results" hidden>
+        <div class="mq-results-header">
+          <div>
+            <h2>Your radical profile</h2>
+            <p class="mq-muted" style="margin:0">Scores are relative preferences</p>
+          </div>
+          <div class="mq-actions">
+            <button type="button" class="mq-btn-secondary" id="restart">Retake</button>
+          </div>
+        </div>
+
+        <div class="mq-result-hero">
+          <p class="mq-eyebrow">Your profile</p>
+          <h3 id="result-name"></h3>
+          <p id="result-summary"></p>
+          <p><strong>Your theory of change:</strong> <span id="result-principle"></span></p>
+          <p><strong>Your potential blind spot:</strong> <span id="result-blindspot"></span></p>
+        </div>
+
+        <h3 class="mq-subsection-title">Radical affinities</h3>
+        <div class="mq-rank-list" id="score-bars"></div>
+        <p class="mq-desc" id="score-explanation"></p>
+      </section>
+    </div>
+  </main>
+
+  <script src="shared/quiz-ui.js"></script>
+  <script>
+    const tendencies = {
+      organizer: "Collective Organizing",
+      abolitionist: "Abolition",
+      mutualist: "Mutual Aid",
+      builder: "Building Alternatives",
+      direct: "Direct Action",
+      infiltrator: "Inside Strategy",
+      cultural: "Cultural Liberation",
+      theorist: "Radical Critique",
+      digital: "Technological Liberation",
+      ecological: "Ecological Resistance"
+    };
+
+    const questions = [
+      {
+        text: "You discover that an institution is producing serious harm exactly as its rules permit. What is your first instinct?",
+        options: [
+          ["Organize the people affected until they have enough collective power to force change.", {organizer: 3}],
+          ["Ask why the institution should continue to exist at all, and what could replace it.", {abolitionist: 3, theorist: 1}],
+          ["Create immediate ways for people to survive without depending on it.", {mutualist: 3, builder: 1}],
+          ["Document the mechanism of harm so clearly that its legitimacy becomes impossible to defend.", {theorist: 3}]
+        ]
+      },
+      {
+        text: "Which sign would most convince you that a movement is becoming powerful?",
+        options: [
+          ["Ordinary people who once felt isolated are acting together and developing leaders of their own.", {organizer: 3}],
+          ["The harmful system can no longer operate normally because cooperation has been withdrawn.", {direct: 3, abolitionist: 1}],
+          ["People can meet important needs through institutions the movement itself controls.", {builder: 3, mutualist: 1}],
+          ["Ideas once dismissed as unthinkable have become part of everyday public language.", {cultural: 2, theorist: 2}]
+        ]
+      },
+      {
+        text: "A reform would materially improve millions of lives but leave the underlying power structure intact. How do you view it?",
+        options: [
+          ["Win it, then use the victory to build confidence and organize for more.", {organizer: 2, infiltrator: 2}],
+          ["Support it without pretending that relief is liberation.", {mutualist: 2, abolitionist: 2}],
+          ["Reject it if it stabilizes or legitimizes a system that must be dismantled.", {abolitionist: 3}],
+          ["Judge whether it shifts actual power and creates openings for deeper change.", {infiltrator: 2, theorist: 2}]
+        ]
+      },
+      {
+        text: "A community has an urgent need that government and charities have repeatedly failed to meet. What should happen next?",
+        options: [
+          ["Create a reciprocal network where people share resources without humiliating eligibility tests.", {mutualist: 3}],
+          ["Build a durable cooperative service that the community owns and governs.", {builder: 3}],
+          ["Occupy public attention and disrupt business as usual until officials respond.", {direct: 3}],
+          ["Get allies into the agencies controlling the resources and redirect them from within.", {infiltrator: 3}]
+        ]
+      },
+      {
+        text: "What is the deepest source of political power?",
+        options: [
+          ["Organized people acting with discipline and solidarity.", {organizer: 3}],
+          ["Control over institutions, budgets, law, and administration.", {infiltrator: 3}],
+          ["The daily cooperation that allows systems to keep functioning.", {direct: 2, abolitionist: 2}],
+          ["The ability to define what society treats as normal, possible, and legitimate.", {cultural: 2, theorist: 2}]
+        ]
+      },
+      {
+        text: "Which project would you be most excited to help create?",
+        options: [
+          ["A tenant union capable of defending everyone in a neighborhood.", {organizer: 3}],
+          ["A free clinic, community pantry, or emergency support network.", {mutualist: 3}],
+          ["A worker-owned platform or community-controlled institution.", {builder: 3, digital: 1}],
+          ["An independent publishing network that cannot be silenced by major platforms.", {digital: 2, cultural: 2}]
+        ]
+      },
+      {
+        text: "When a movement's language becomes popular but its demands are softened, what has happened?",
+        options: [
+          ["Its culture changed faster than its power; the next task is organizing people around concrete demands.", {organizer: 2, cultural: 2}],
+          ["The system absorbed its symbols to protect itself from structural change.", {theorist: 2, abolitionist: 2}],
+          ["It gained an opening that skilled insiders may be able to turn into policy.", {infiltrator: 3}],
+          ["Its radical edge must be made visible again through disruptive action.", {direct: 2, cultural: 2}]
+        ]
+      },
+      {
+        text: "A harmful practice is deeply embedded in everyday customs rather than enforced by law. What approach seems strongest?",
+        options: [
+          ["Create art, language, stories, and public examples that make other ways of living imaginable.", {cultural: 3}],
+          ["Trace how the custom serves material interests and expose the power beneath it.", {theorist: 3}],
+          ["Build communities that practice the alternative now and prove it can work.", {builder: 2, cultural: 2}],
+          ["Organize the people harmed by it to challenge the workplaces and institutions reproducing it.", {organizer: 3}]
+        ]
+      },
+      {
+        text: "A giant platform controls access to work, audiences, and social life. What is the most radical response?",
+        options: [
+          ["Build open, interoperable tools that let people own their identities and leave without losing everything.", {digital: 3, builder: 1}],
+          ["Organize workers and users to exercise power over its decisions.", {organizer: 3, digital: 1}],
+          ["Treat it as essential infrastructure and bring it under democratic public control.", {infiltrator: 2, abolitionist: 1}],
+          ["Refuse it, disrupt its inevitability, and make opting out culturally visible.", {direct: 2, cultural: 2}]
+        ]
+      },
+      {
+        text: "What role should confrontation play in social change?",
+        options: [
+          ["It is necessary when polite channels exist mainly to absorb opposition without changing anything.", {direct: 3}],
+          ["It should be chosen collectively and used to strengthen—not substitute for—organization.", {organizer: 3, direct: 1}],
+          ["It is less important than making the old system unnecessary by building something better.", {builder: 3}],
+          ["Its value depends on whether it reveals contradictions and changes public understanding.", {cultural: 2, theorist: 2}]
+        ]
+      },
+      {
+        text: "Which failure worries you most after a movement wins?",
+        options: [
+          ["A small leadership class begins speaking for everyone and cannot be held accountable.", {organizer: 2, abolitionist: 2}],
+          ["The old institution changes its language while preserving the same coercive function.", {abolitionist: 3}],
+          ["The movement can protest but has built nothing capable of meeting people's needs.", {builder: 2, mutualist: 2}],
+          ["Victory depends on tools and communication systems controlled by hostile companies or states.", {digital: 3}]
+        ]
+      },
+      {
+        text: "How should radicals relate to elections?",
+        options: [
+          ["Use them tactically when they reduce harm or move resources, but never confuse voting with power.", {infiltrator: 3, organizer: 1}],
+          ["Build independent mass organization that can pressure whoever wins.", {organizer: 3}],
+          ["Focus on direct provision and self-governed alternatives rather than capturing the state.", {builder: 2, mutualist: 2}],
+          ["Expose how electoral politics limits imagination to choices the existing system can tolerate.", {theorist: 2, abolitionist: 2}]
+        ]
+      },
+      {
+        text: "What is the best response to a law you consider fundamentally unjust?",
+        options: [
+          ["Coordinate principled noncompliance that makes enforcement politically and practically costly.", {direct: 3, organizer: 1}],
+          ["Help targeted people avoid its consequences while building networks of safety.", {mutualist: 3}],
+          ["Challenge it through every administrative and legal opening available.", {infiltrator: 3}],
+          ["Attack the idea that the institution enforcing it should possess that power in the first place.", {abolitionist: 3, theorist: 1}]
+        ]
+      },
+      {
+        text: "Which statement best captures your environmental politics?",
+        options: [
+          ["No economy has the right to destroy the living systems on which all future freedom depends.", {ecological: 3}],
+          ["Communities need local food, energy, repair, and infrastructure resilient enough to survive disruption.", {ecological: 2, builder: 2}],
+          ["The people least responsible for ecological damage must have the most power in deciding the transition.", {organizer: 2, ecological: 2}],
+          ["Growth and extraction are not policy mistakes; they are structural requirements of the present system.", {theorist: 2, ecological: 2}]
+        ]
+      },
+      {
+        text: "A radical group is intellectually impressive but difficult for ordinary people to enter. What does it most need?",
+        options: [
+          ["Patient relationship-building, accessible entry points, and leadership development.", {organizer: 3}],
+          ["Projects that provide tangible help and demonstrate its values in practice.", {mutualist: 2, builder: 2}],
+          ["Clearer language and culture that invite people without diluting the analysis.", {cultural: 2, theorist: 2}],
+          ["A willingness to act decisively enough that its ideas have real consequences.", {direct: 3}]
+        ]
+      },
+      {
+        text: "What does it mean to build the new world inside the old one?",
+        options: [
+          ["Create institutions organized around the values we want society eventually to embody.", {builder: 3}],
+          ["Practice mutual responsibility now instead of waiting for authorities to deliver justice.", {mutualist: 3}],
+          ["Develop open tools and knowledge that make centralized gatekeepers obsolete.", {digital: 3}],
+          ["Transform everyday relationships, identities, and cultural expectations alongside material systems.", {cultural: 3}]
+        ]
+      },
+      {
+        text: "Which compromise is most dangerous?",
+        options: [
+          ["Trading independent organization for access to powerful officials.", {organizer: 2, infiltrator: 1}],
+          ["Improving the conditions inside a coercive institution until people stop imagining its abolition.", {abolitionist: 3}],
+          ["Accepting corporate control because a proprietary tool is temporarily convenient.", {digital: 3}],
+          ["Sacrificing ecological survival because a destructive system supplies current jobs or consumption.", {ecological: 3}]
+        ]
+      },
+      {
+        text: "What kind of knowledge is most useful to a radical movement?",
+        options: [
+          ["A precise account of how power reproduces itself and disguises its interests as common sense.", {theorist: 3}],
+          ["Practical knowledge of how to organize meetings, resolve conflict, and sustain participation.", {organizer: 3}],
+          ["Skills for growing food, repairing tools, coding systems, caring for people, and sharing resources.", {builder: 2, mutualist: 2}],
+          ["The stories, symbols, and language that allow people to imagine themselves differently.", {cultural: 3}]
+        ]
+      },
+      {
+        text: "If a system cannot be transformed all at once, what should radicals do in the meantime?",
+        options: [
+          ["Win changes that reduce suffering while steadily expanding organized power.", {organizer: 2, infiltrator: 2}],
+          ["Help people survive it without making them prove they deserve help.", {mutualist: 3}],
+          ["Create partial alternatives that people can enter, improve, and connect.", {builder: 3}],
+          ["Keep the full critique alive so temporary measures do not become the limit of imagination.", {theorist: 2, abolitionist: 2}]
+        ]
+      },
+      {
+        text: "Which statement comes closest to your theory of radical change?",
+        options: [
+          ["People become powerful by organizing durable solidarity around shared material interests.", {organizer: 3}],
+          ["Some institutions cannot be made humane; their functions must be dismantled and replaced.", {abolitionist: 3}],
+          ["Care and survival should be organized through reciprocity rather than charity or control.", {mutualist: 3}],
+          ["Alternatives become credible when we build and govern them in the present.", {builder: 3}],
+          ["Systems change when coordinated disruption makes normal operation impossible.", {direct: 3}],
+          ["Power can be redirected through strategic use of law, budgets, elections, and administration.", {infiltrator: 3}],
+          ["Liberation requires transforming culture, identity, relationships, and the boundaries of the imaginable.", {cultural: 3}],
+          ["Before power can be defeated, its hidden assumptions and mechanisms must be made visible.", {theorist: 3}],
+          ["Freedom requires open tools, user ownership, and infrastructure no gatekeeper can monopolize.", {digital: 3}],
+          ["Human systems must submit to ecological reality rather than treating the living world as raw material.", {ecological: 3}]
+        ]
+      }
+    ];
+
+    const profiles = {
+      organizer: {
+        name: "The Grassroots Organizer",
+        summary: "You believe people become powerful through relationships, shared analysis, leadership development, and durable collective organization. A crowd can disappear; an organized base can make decisions, survive setbacks, and force institutions to respond.",
+        principle: "Lasting change comes from organized people who recognize their own collective power.",
+        blindspot: "Organization can become process-heavy, cautious, or dominated by the people with the most time and comfort inside meetings."
+      },
+      abolitionist: {
+        name: "The System Abolitionist",
+        summary: "You ask a question reformers often avoid: should this institution possess its power at all? When harm is not a malfunction but part of an institution's function, you want that function dismantled and replaced rather than administered more gently.",
+        principle: "A system designed around domination cannot be perfected into liberation.",
+        blindspot: "Abolition can remain abstract unless it specifies how necessary functions, immediate safety, and the transition away from the old system will be handled."
+      },
+      mutualist: {
+        name: "The Mutual-Aid Radical",
+        summary: "Your politics begins with people keeping one another alive without paternalism, eligibility rituals, or distant permission. Mutual aid is both immediate relief and a rehearsal for social relationships based on reciprocity rather than control.",
+        principle: "Solidarity means sharing survival, not deciding who deserves charity.",
+        blindspot: "Voluntary networks can burn out, distribute labor unevenly, and struggle to provide universal or highly specialized services at scale."
+      },
+      builder: {
+        name: "The Prefigurative Builder",
+        summary: "You want to construct the alternative in the present: cooperatives, community institutions, independent infrastructure, and forms of governance that embody the values they claim to pursue. Critique becomes convincing when people can enter something better.",
+        principle: "The new world gains power by becoming tangible before the old one disappears.",
+        blindspot: "Alternative institutions can become isolated enclaves, reproduce hidden inequalities, or survive only by accommodating the larger system around them."
+      },
+      direct: {
+        name: "The Direct-Action Disruptor",
+        summary: "You focus on the cooperation every system quietly requires. When official channels absorb dissent without changing anything, coordinated refusal, obstruction, occupation, boycott, or civil disobedience can turn ignored demands into unavoidable realities.",
+        principle: "Power concedes when the cost of continuing becomes greater than the cost of change.",
+        blindspot: "Disruption without a durable base, clear goal, or public legitimacy can exhaust participants and provoke consequences borne by less protected people."
+      },
+      infiltrator: {
+        name: "The Institutional Infiltrator",
+        summary: "You treat institutions as contested machinery rather than untouchable monoliths. Law, budgets, elections, agencies, and professional authority can sometimes be captured, redirected, or used to create openings that outside pressure alone cannot secure.",
+        principle: "Power inside institutions is still power, and leaving it uncontested does not make it disappear.",
+        blindspot: "Institutions are often better at absorbing radicals than radicals are at transforming institutions; access and incremental wins can quietly redefine the mission."
+      },
+      cultural: {
+        name: "The Cultural Liberationist",
+        summary: "You understand that systems live inside habits, language, relationships, identities, and imagination. Political structures can survive formal reform when people still experience the old hierarchy as natural. You expand freedom by making other lives and values visible.",
+        principle: "People cannot build a possibility they have never been allowed to imagine.",
+        blindspot: "Cultural visibility can be mistaken for material power, and radical aesthetics are especially easy for markets and institutions to absorb."
+      },
+      theorist: {
+        name: "The Radical Theorist",
+        summary: "You expose the machinery beneath the surface: who benefits, which assumptions are hidden, how consent is manufactured, and why recurring harms are structural rather than accidental. A movement that misunderstands power may reproduce what it opposes.",
+        principle: "Change begins by naming the system accurately enough that its inevitability disappears.",
+        blindspot: "Analysis can become an identity, a status hierarchy, or a substitute for the imperfect practical work required to change people's lives."
+      },
+      digital: {
+        name: "The Digital Liberationist",
+        summary: "You see technological architecture as political architecture. Identity, communication, creative work, archives, and discovery should not exist at the pleasure of monopolistic platforms. You want open protocols, user ownership, interoperability, and tools people can control.",
+        principle: "Freedom requires infrastructure that cannot revoke your participation or confiscate your digital life.",
+        blindspot: "Open tools do not automatically create inclusive communities, sustainable funding, accessible design, discovery, or protection from concentrated social power."
+      },
+      ecological: {
+        name: "The Ecological Radical",
+        summary: "You begin from the physical truth that no political or economic order can negotiate with ecological collapse. Extraction, endless growth, and treating the living world as property are structural forms of domination requiring a fundamental reorganization of production and daily life.",
+        principle: "Human freedom that destroys its own conditions of existence is not freedom.",
+        blindspot: "Ecological urgency can encourage romantic visions of local life or policies whose costs fall hardest on people with the least power and fewest alternatives."
+      },
+      pluralist: {
+        name: "The Radical Coalitionist",
+        summary: "You do not believe a single strategy can transform every form of power. Organizing, mutual aid, disruption, institution-building, cultural work, structural critique, and inside pressure become strongest when they reinforce one another without pretending to be interchangeable.",
+        principle: "Movements win through an ecosystem of strategies, not one universally correct tactic.",
+        blindspot: "Strategic pluralism can conceal real contradictions; not every tactic is compatible, and avoiding hard choices can leave a coalition without direction."
+      }
+    };
+
+    const form = document.getElementById("quiz");
+    const results = document.getElementById("results");
+    const error = document.getElementById("error");
+    const barEl = document.getElementById("bar");
+    const progressCount = document.getElementById("progressCount");
+    const labels = tendencies;
+
+    let currentIndex = 0;
+    let transitioning = false;
+    const answers = {};
+
+    function renderQuiz() {
+      form.innerHTML = "";
+      questions.forEach((question, questionIndex) => {
+        const sec = document.createElement("section");
+        sec.className = "mq-q" + (questionIndex === 0 ? " is-active is-enter" : "");
+        sec.dataset.index = String(questionIndex);
+        if (questionIndex !== 0) sec.hidden = true;
+
+        const h2 = document.createElement("h2");
+        h2.className = "mq-q-title";
+        h2.textContent = question.text;
+        sec.appendChild(h2);
+
+        const opts = document.createElement("div");
+        opts.className = "mq-options";
+        question.options.forEach((option, optionIndex) => {
+          const id = "q" + questionIndex + "_opt" + optionIndex;
+          const label = document.createElement("label");
+          label.className = "mq-option";
+          label.setAttribute("for", id);
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = "q" + questionIndex;
+          input.id = id;
+          input.value = String(optionIndex);
+          const span = document.createElement("span");
+          span.textContent = option[0];
+          label.append(input, span);
+          input.addEventListener("change", () => {
+            answers[questionIndex] = optionIndex;
+            opts.querySelectorAll(".mq-option").forEach((el) => el.classList.remove("is-selected"));
+            label.classList.add("is-selected");
+            error.classList.remove("is-visible");
+            error.textContent = "";
+          });
+          opts.appendChild(label);
+        });
+        sec.appendChild(opts);
+
+        const nav = document.createElement("div");
+        nav.className = "mq-nav";
+        const back = document.createElement("button");
+        back.type = "button";
+        back.className = "mq-btn-secondary";
+        back.textContent = "Back";
+        back.disabled = questionIndex === 0;
+        back.addEventListener("click", () => goto(questionIndex - 1));
+        const next = document.createElement("button");
+        next.type = "button";
+        next.textContent = questionIndex === questions.length - 1 ? "See results" : "Next";
+        next.addEventListener("click", () => {
+          const checked = form.querySelector('input[name="q' + questionIndex + '"]:checked');
+          if (!checked) {
+            error.textContent = "Please choose an option to continue.";
+            error.classList.add("is-visible");
+            return;
+          }
+          answers[questionIndex] = Number(checked.value);
+          if (questionIndex === questions.length - 1) {
+            showResults(calculateScores());
+          } else {
+            goto(questionIndex + 1);
+          }
+        });
+        nav.append(back, next);
+        sec.appendChild(nav);
+        form.appendChild(sec);
+      });
+      updateProgress(0);
+    }
+
+    function goto(i) {
+      const total = questions.length;
+      if (i < 0) i = 0;
+      if (i >= total) i = total - 1;
+      if (transitioning || i === currentIndex) return;
+      const from = form.querySelector('.mq-q[data-index="' + currentIndex + '"]');
+      const to = form.querySelector('.mq-q[data-index="' + i + '"]');
+      transitioning = true;
+      currentIndex = i;
+      MQ.stageQuestion(from, to, {
+        onDone: () => {
+          transitioning = false;
+          to.querySelector('input[type="radio"]')?.focus();
+        },
+      });
+      updateProgress(i);
+    }
+
+    function updateProgress(idx) {
+      MQ.setProgress(barEl, (idx / questions.length) * 100);
+      progressCount.textContent = (idx + 1) + " / " + questions.length;
+    }
+
+    function calculateScores() {
+      const scores = Object.fromEntries(Object.keys(labels).map((key) => [key, 0]));
+      questions.forEach((question, questionIndex) => {
+        const selected = form.querySelector('input[name="q' + questionIndex + '"]:checked');
+        const weights = question.options[Number(selected.value)][1];
+        Object.entries(weights).forEach(([key, points]) => (scores[key] += points));
+      });
+      return scores;
+    }
+
+    function chooseProfile(scores) {
+      const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const [first, second] = ranked;
+      const nearTop = ranked.filter(([, score]) => score >= first[1] - 3).length;
+      if (nearTop >= 4 || (first[1] - second[1] <= 1 && ranked[2][1] >= first[1] - 2)) return profiles.pluralist;
+      return profiles[first[0]];
+    }
+
+    function showResults(scores) {
+      const profile = chooseProfile(scores);
+      const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const max = Math.max(...Object.values(scores), 1);
+
+      document.getElementById("result-name").textContent = profile.name;
+      document.getElementById("result-summary").textContent = profile.summary;
+      document.getElementById("result-principle").textContent = profile.principle;
+      document.getElementById("result-blindspot").textContent = profile.blindspot;
+
+      const bars = document.getElementById("score-bars");
+      bars.innerHTML = ranked
+        .map(([key, score], i) => {
+          const pct = Math.round((score / max) * 100);
+          return (
+            '<div class="mq-rank-row' +
+            (i === 0 ? " is-top" : "") +
+            '">' +
+            '<div class="mq-rank-name">' +
+            labels[key] +
+            "</div>" +
+            '<div class="mq-rank-track"><span class="mq-rank-fill" data-width="' +
+            pct +
+            '%"></span></div>' +
+            '<div class="mq-rank-pct">' +
+            score +
+            "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+
+      const topNames = ranked.slice(0, 3).map(([key]) => labels[key]);
+      const bottomName = labels[ranked[ranked.length - 1][0]];
+      document.getElementById("score-explanation").textContent =
+        `Your strongest affinities were ${topNames[0]}, ${topNames[1]}, and ${topNames[2]}. ` +
+        `${bottomName} received the least weight. Scores describe your preferred theories and methods of change; they do not measure commitment, courage, or ideological purity.`;
+
+      form.style.display = "none";
+      results.hidden = false;
+      results.classList.add("is-visible");
+      MQ.setProgress(barEl, 100);
+      progressCount.textContent = questions.length + " / " + questions.length;
+      MQ.staggerReveal(bars);
+      results.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    document.getElementById("restart").addEventListener("click", () => {
+      Object.keys(answers).forEach((k) => delete answers[k]);
+      form.querySelectorAll('input[type="radio"]').forEach((r) => (r.checked = false));
+      form.querySelectorAll(".mq-option").forEach((el) => el.classList.remove("is-selected"));
+      results.hidden = true;
+      results.classList.remove("is-visible");
+      form.style.display = "block";
+      currentIndex = 0;
+      form.querySelectorAll(".mq-q").forEach((q, idx) => {
+        q.classList.toggle("is-active", idx === 0);
+        q.classList.remove("is-exit");
+        q.hidden = idx !== 0;
+        if (idx === 0) {
+          q.classList.remove("is-enter");
+          void q.offsetWidth;
+          q.classList.add("is-enter");
+        }
+      });
+      error.textContent = "";
+      error.classList.remove("is-visible");
+      updateProgress(0);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    renderQuiz();
+  </script>
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>What Kind of Nonconformist Are You? — MetaQuizzes</title>
+  <link rel="stylesheet" href="shared/ink-night.css" />
+</head>
+<body class="mq">
+  <div class="mq-bg" aria-hidden="true"></div>
+
+  <header class="mq-top">
+    <a class="mq-brand" href="index.html">MetaQuizzes</a>
+    <span class="mq-quiz-label">Nonconformity</span>
+  </header>
+
+  <main class="mq-stage">
+    <h1>What kind of nonconformist are you?</h1>
+    <p class="mq-lede">Nonconformity can be loud, private, creative, intellectual, political, or deeply personal. Choose the answer closest to how you actually live—not the one that sounds most rebellious.</p>
+
+    <div class="mq-progress">
+      <div class="mq-progress-meta">
+        <span class="mq-section-label">Question</span>
+        <span class="mq-progress-count" id="progressCount">1 / 1</span>
+      </div>
+      <div class="mq-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="mq-progress-fill" id="bar"></span>
+      </div>
+    </div>
+
+    <div class="mq-panel" aria-live="polite">
+      <form id="quiz" novalidate></form>
+      <p class="mq-err" id="error" role="alert"></p>
+
+      <section class="mq-results" id="results" hidden>
+        <div class="mq-results-header">
+          <div>
+            <h2>Your nonconformist profile</h2>
+            <p class="mq-muted" style="margin:0">Scores are relative preferences</p>
+          </div>
+          <div class="mq-actions">
+            <button type="button" class="mq-btn-secondary" id="restart">Retake</button>
+          </div>
+        </div>
+
+        <div class="mq-result-hero">
+          <p class="mq-eyebrow">Your profile</p>
+          <h3 id="result-name"></h3>
+          <p id="result-summary"></p>
+          <p><strong>Your form of resistance:</strong> <span id="result-principle"></span></p>
+          <p><strong>Your potential blind spot:</strong> <span id="result-blindspot"></span></p>
+        </div>
+
+        <h3 class="mq-subsection-title">Nonconformist affinities</h3>
+        <div class="mq-rank-list" id="score-bars"></div>
+        <p class="mq-desc" id="score-explanation"></p>
+      </section>
+    </div>
+  </main>
+
+  <script src="shared/quiz-ui.js"></script>
+  <script>
+    const styles = {
+      selfauthor: "Self-Authorship",
+      refuser: "Quiet Refusal",
+      provocateur: "Visible Defiance",
+      heretic: "Intellectual Heresy",
+      experimenter: "Life Experimentation",
+      dissident: "Political Dissent",
+      diy: "DIY Independence",
+      boundary: "Boundary Defiance",
+      outsider: "Outsider Freedom",
+      strategist: "Strategic Conformity"
+    };
+
+    const questions = [
+      {
+        text: "You realize that a life milestone everyone expects you to want holds no appeal. What do you do?",
+        options: [
+          ["Build a different life around what I genuinely value and make no apology for it.", {selfauthor: 3, experimenter: 1}],
+          ["Quietly decline it without turning my choice into a public statement.", {refuser: 3, boundary: 1}],
+          ["Talk openly about rejecting it so other people know the default is optional.", {provocateur: 2, selfauthor: 2}],
+          ["Question the social, economic, and political forces that made it a default in the first place.", {heretic: 2, dissident: 2}]
+        ]
+      },
+      {
+        text: "A dress code is arbitrary but breaking it would create unnecessary trouble for you. What is your instinct?",
+        options: [
+          ["Break it visibly; pointless rules survive because people reward them with obedience.", {provocateur: 3, boundary: 1}],
+          ["Follow it for now. Choosing my battles protects my freedom where it matters more.", {strategist: 3}],
+          ["Find a technically compliant way to undermine its intended uniformity.", {diy: 2, refuser: 2}],
+          ["Try to get the rule changed for everyone rather than treating it as a personal style contest.", {dissident: 3}]
+        ]
+      },
+      {
+        text: "Which experience makes you feel most trapped?",
+        options: [
+          ["Being assigned an identity or role that does not describe me.", {selfauthor: 3}],
+          ["Having to perform enthusiasm for customs I find meaningless.", {refuser: 3}],
+          ["Depending on a company or institution that can revoke my access.", {diy: 3, outsider: 1}],
+          ["Being told an idea is beyond debate because respectable people already agree.", {heretic: 3}]
+        ]
+      },
+      {
+        text: "Someone tells you, “That isn't how people like us do things.” Which response feels most natural?",
+        options: [
+          ["Then perhaps I am not one of the people you think I am.", {selfauthor: 3, boundary: 1}],
+          ["I ask why, and keep asking until the hidden assumptions are visible.", {heretic: 3}],
+          ["I do it my way and let the result speak for itself.", {refuser: 2, diy: 2}],
+          ["I make my departure unmistakable. The expectation deserves to be disrupted.", {provocateur: 3}]
+        ]
+      },
+      {
+        text: "You discover that an unpopular argument is better supported by evidence than the accepted position. What matters most?",
+        options: [
+          ["Saying what appears true, even if association with the argument damages my reputation.", {heretic: 3, outsider: 1}],
+          ["Testing the argument privately before taking a public position.", {strategist: 2, heretic: 2}],
+          ["Challenging the institutions that made disagreement socially costly.", {dissident: 3, heretic: 1}],
+          ["Finding a way to demonstrate the point through a project rather than an argument.", {diy: 3}]
+        ]
+      },
+      {
+        text: "What is the best reason to break a social norm?",
+        options: [
+          ["It prevents you from living honestly as yourself.", {selfauthor: 3}],
+          ["It protects an unjust distribution of power.", {dissident: 3}],
+          ["Breaking it creates new possibilities for beauty, pleasure, or experience.", {experimenter: 3, provocateur: 1}],
+          ["There does not need to be a grand reason; a norm has no automatic claim on me.", {boundary: 3, refuser: 1}]
+        ]
+      },
+      {
+        text: "A platform becomes the place where nearly everyone in your field participates, but you dislike its rules and culture. What do you do?",
+        options: [
+          ["Leave and accept the cost. Participation is not worth surrendering control.", {outsider: 3, refuser: 1}],
+          ["Build or support an independent alternative, even if it remains smaller.", {diy: 3, outsider: 1}],
+          ["Use it tactically while keeping my real work and identity somewhere I control.", {strategist: 3, diy: 1}],
+          ["Organize users to pressure the platform or challenge its dominance.", {dissident: 3}]
+        ]
+      },
+      {
+        text: "How do you react when something unconventional becomes fashionable?",
+        options: [
+          ["If I genuinely like it, popularity does not make it less mine.", {selfauthor: 2, strategist: 1}],
+          ["I often lose interest once it becomes another script people are expected to follow.", {outsider: 2, refuser: 2}],
+          ["I am glad the boundary moved; yesterday's defiance can become tomorrow's freedom.", {provocateur: 2, experimenter: 2}],
+          ["I become curious about who profits from packaging rebellion as a consumer identity.", {heretic: 2, dissident: 2}]
+        ]
+      },
+      {
+        text: "Which creation would feel most satisfying?",
+        options: [
+          ["A life that cannot be summarized by the categories I was given.", {selfauthor: 3, experimenter: 1}],
+          ["A tool or space that lets people bypass a gatekeeper entirely.", {diy: 3, outsider: 1}],
+          ["A work that disturbs respectable assumptions and starts arguments.", {provocateur: 3, heretic: 1}],
+          ["A durable alternative institution that redistributes power.", {dissident: 3, diy: 1}]
+        ]
+      },
+      {
+        text: "At a gathering, everyone expresses the same opinion and you strongly disagree. What are you most likely to do?",
+        options: [
+          ["State my disagreement directly; consensus should survive contact with dissent.", {heretic: 3, provocateur: 1}],
+          ["Ask questions that reveal weaknesses without turning myself into the subject.", {strategist: 3, heretic: 1}],
+          ["Say nothing unless the belief is actively harming someone.", {refuser: 2, strategist: 2}],
+          ["Challenge not only the opinion but the social pressure producing the performance of agreement.", {provocateur: 2, dissident: 2}]
+        ]
+      },
+      {
+        text: "What is your relationship to labels?",
+        options: [
+          ["I use them when they help me communicate, but I refuse to let them define my boundaries.", {selfauthor: 3}],
+          ["I enjoy combining identities or categories people assume cannot coexist.", {experimenter: 3, provocateur: 1}],
+          ["I prefer to remain difficult to classify; legibility often becomes a form of control.", {outsider: 3, boundary: 1}],
+          ["Labels are politically useful when they help people recognize shared conditions and organize.", {dissident: 2, strategist: 2}]
+        ]
+      },
+      {
+        text: "A tradition is harmless, but it feels empty and performative to you. What do you do?",
+        options: [
+          ["Participate for the people I care about; not every compromise threatens my identity.", {strategist: 3}],
+          ["Opt out quietly and allow others to enjoy it.", {refuser: 3, boundary: 1}],
+          ["Replace it with a ritual that actually means something to me.", {experimenter: 2, selfauthor: 2}],
+          ["Deliberately puncture its seriousness if people treat participation as mandatory.", {provocateur: 3}]
+        ]
+      },
+      {
+        text: "An institution offers you influence, but only if you soften your image and language. Which choice appeals most?",
+        options: [
+          ["Refuse. Influence purchased with self-erasure belongs to the institution, not me.", {outsider: 2, selfauthor: 2}],
+          ["Accept and use the access to change what I can from inside.", {strategist: 3, dissident: 1}],
+          ["Accept publicly while building independent leverage they cannot control.", {diy: 2, strategist: 2}],
+          ["Expose the bargain itself and force a public argument about respectability.", {provocateur: 2, dissident: 2}]
+        ]
+      },
+      {
+        text: "Which kind of freedom matters most in everyday life?",
+        options: [
+          ["Freedom to define who I am and revise that definition whenever I need to.", {selfauthor: 3}],
+          ["Freedom to decline participation without defending or explaining myself.", {boundary: 3, refuser: 1}],
+          ["Freedom to make, repair, publish, and organize without institutional permission.", {diy: 3}],
+          ["Freedom to live beyond constant judgment by the mainstream.", {outsider: 3}]
+        ]
+      },
+      {
+        text: "When does conformity become morally troubling?",
+        options: [
+          ["When people abandon their own perception because they fear standing alone.", {heretic: 3}],
+          ["When social comfort depends on someone else hiding who they are.", {selfauthor: 2, boundary: 2}],
+          ["When obedience keeps an unjust system functioning.", {dissident: 3}],
+          ["When standardized life crowds out experimentation and unexpected ways of living.", {experimenter: 3}]
+        ]
+      },
+      {
+        text: "You want something that conventional institutions do not provide. What is your first instinct?",
+        options: [
+          ["Make it myself with whatever skills and resources I can assemble.", {diy: 3}],
+          ["Find the scattered people already living outside the conventional system.", {outsider: 3, experimenter: 1}],
+          ["Invent a new arrangement and treat my own life as the prototype.", {experimenter: 3, selfauthor: 1}],
+          ["Pressure the institution to serve people it has ignored.", {dissident: 3}]
+        ]
+      },
+      {
+        text: "Someone calls you difficult because you will not meet an expectation you never agreed to. What is your response?",
+        options: [
+          ["Disappointment is not authority. Their expectation does not create my obligation.", {boundary: 3, selfauthor: 1}],
+          ["I simply continue saying no; I do not need to turn it into a debate.", {refuser: 3, boundary: 1}],
+          ["I explain exactly how the expectation benefits them at my expense.", {heretic: 1, provocateur: 1, boundary: 2}],
+          ["I decide whether temporary cooperation serves a larger goal of mine.", {strategist: 3}]
+        ]
+      },
+      {
+        text: "What is most likely to make you publicly defiant?",
+        options: [
+          ["Someone trying to shame people back into an approved identity or life path.", {provocateur: 2, selfauthor: 2}],
+          ["A powerful institution making obedience effectively unavoidable.", {dissident: 3, boundary: 1}],
+          ["A sacred belief being protected from evidence or criticism.", {heretic: 3}],
+          ["A gatekeeper insisting that ordinary people cannot create or participate without permission.", {diy: 3, provocateur: 1}]
+        ]
+      },
+      {
+        text: "What distinguishes genuine nonconformity from rebellion as a performance?",
+        options: [
+          ["It continues even when nobody is watching and there is no social reward.", {refuser: 2, selfauthor: 2}],
+          ["It changes who has power, not merely which aesthetics are fashionable.", {dissident: 3}],
+          ["It produces independent alternatives instead of depending on the thing it mocks.", {diy: 3}],
+          ["It follows curiosity wherever it leads, including back toward something conventional.", {experimenter: 2, heretic: 2}]
+        ]
+      },
+      {
+        text: "Which statement comes closest to your personal form of nonconformity?",
+        options: [
+          ["I decide who I am instead of treating inherited roles as instructions.", {selfauthor: 3}],
+          ["I reserve the right not to participate, explain, perform, or belong.", {refuser: 2, boundary: 2}],
+          ["I make disagreement visible enough that other people feel permitted to dissent too.", {provocateur: 3}],
+          ["I question the premise when everyone else is arguing over the approved answers.", {heretic: 3}],
+          ["I treat ways of living as possibilities to test rather than rules to inherit.", {experimenter: 3}],
+          ["I want to dismantle the systems that manufacture conformity and punish refusal.", {dissident: 3}],
+          ["I build my own tools, spaces, and paths rather than wait for permission.", {diy: 3}],
+          ["I can move through conventional spaces without allowing them to own me.", {strategist: 3, outsider: 1}]
+        ]
+      }
+    ];
+
+    const profiles = {
+      selfauthor: {
+        name: "The Identity Architect",
+        summary: "Your nonconformity begins with self-authorship. You refuse to treat inherited roles, demographic expectations, relationship scripts, or conventional milestones as instructions. Your life is something you compose rather than a part you audition to play.",
+        principle: "No social category has greater authority over my identity than I do.",
+        blindspot: "Identity is never created in total isolation; rejecting every external influence can obscure the relationships and histories that genuinely shaped you."
+      },
+      refuser: {
+        name: "The Quiet Refuser",
+        summary: "Your rebellion is often invisible because you do not need an audience. You withdraw cooperation from rituals, expectations, and systems that make no sense to you, conserving your energy rather than performing opposition for people whose approval you never wanted.",
+        principle: "I do not owe participation merely because participation is customary.",
+        blindspot: "Private refusal protects your own freedom but may leave the expectation intact for people who cannot opt out as easily."
+      },
+      provocateur: {
+        name: "The Cultural Provocateur",
+        summary: "You make alternatives visible. Your style of nonconformity interrupts respectable assumptions, punctures false consensus, and turns private dissent into something other people must acknowledge. Sometimes discomfort is precisely the point.",
+        principle: "A norm loses power when someone breaks it openly and survives.",
+        blindspot: "Provocation can become more focused on producing a reaction than creating lasting freedom, and attention can be mistaken for impact."
+      },
+      heretic: {
+        name: "The Intellectual Heretic",
+        summary: "Your deepest loyalty is to honest inquiry rather than approved conclusions. You notice hidden premises, test sacred ideas, and tolerate the social discomfort of reaching an answer your group would prefer you not consider.",
+        principle: "Consensus is evidence about people, not final proof about reality.",
+        blindspot: "Contrarian ideas are not automatically braver or truer, and permanent skepticism can undervalue hard-won knowledge and justified trust."
+      },
+      experimenter: {
+        name: "The Lifestyle Experimentalist",
+        summary: "You treat life as a field of possibilities rather than a fixed template. Relationships, work, home, identity, pleasure, and community are arrangements that can be revised, combined, or invented through lived experimentation.",
+        principle: "A way of living should earn my commitment through experience, not inheritance.",
+        blindspot: "Constant experimentation can make durability feel like stagnation and leave other people absorbing the instability of each new trial."
+      },
+      dissident: {
+        name: "The System Dissident",
+        summary: "You see conformity as a political force, not merely a personality trait. Institutions manufacture normality, reward compliance, and make refusal expensive. Your nonconformity aims to change the structure so freedom is not reserved for unusually defiant individuals.",
+        principle: "Personal rebellion matters most when it weakens systems of coercion.",
+        blindspot: "A structural analysis can overlook personal motives, informal culture, and the ways people sometimes freely choose lives that resemble convention."
+      },
+      diy: {
+        name: "The DIY Independent",
+        summary: "You answer gatekeeping by building. Instead of waiting for institutions, experts, or platforms to include you, you learn enough to create your own tools, spaces, publications, communities, and routes around them.",
+        principle: "The most convincing alternative is one that already works.",
+        blindspot: "Self-reliance can become exhausting, duplicate shared infrastructure, or underestimate how many people lack the time and resources to build everything themselves."
+      },
+      boundary: {
+        name: "The Boundary Defier",
+        summary: "Your nonconformity lives in the word no. You recognize that expectations, disappointment, tradition, and social pressure do not create automatic obligations. You defend the boundary between what others want from you and what they are entitled to demand.",
+        principle: "An expectation is not consent, and disappointment is not authority.",
+        blindspot: "Relationships sometimes involve obligations that are not captured by explicit agreements; treating every claim as intrusion can erode mutual reliance."
+      },
+      outsider: {
+        name: "The Voluntary Outsider",
+        summary: "You are unusually willing to live beyond the mainstream rather than bargain endlessly for its acceptance. Distance gives you room to preserve your values, find overlooked people and possibilities, and see conventions that become invisible from inside.",
+        principle: "Belonging is not worth any price, and exclusion can become freedom.",
+        blindspot: "Life outside dominant spaces can become isolation, reduce your influence, or make exclusion feel voluntary when part of it was imposed."
+      },
+      strategist: {
+        name: "The Strategic Nonconformist",
+        summary: "You do not confuse visible rule-breaking with freedom. You can cooperate, blend in, or use conventional institutions without surrendering your private judgment. Your compliance is selective, tactical, and always subject to withdrawal.",
+        principle: "I choose where resistance matters; convention does not choose for me.",
+        blindspot: "Tactical compromise can slowly become accommodation, especially when access and comfort reward you for postponing open dissent."
+      },
+      pluralist: {
+        name: "The Many-Sided Nonconformist",
+        summary: "Your nonconformity cannot be located in one arena. You combine self-authorship, skeptical inquiry, selective refusal, experimentation, creation, and resistance according to the situation. You are less committed to appearing unconventional than to remaining internally free.",
+        principle: "No single script—not even the script of the rebel—gets to define me.",
+        blindspot: "Flexibility can make your commitments difficult for others to predict and can obscure which principles you would defend at real personal cost."
+      }
+    };
+
+    const form = document.getElementById("quiz");
+    const results = document.getElementById("results");
+    const error = document.getElementById("error");
+    const barEl = document.getElementById("bar");
+    const progressCount = document.getElementById("progressCount");
+    const labels = styles;
+
+    let currentIndex = 0;
+    let transitioning = false;
+    const answers = {};
+
+    function renderQuiz() {
+      form.innerHTML = "";
+      questions.forEach((question, questionIndex) => {
+        const sec = document.createElement("section");
+        sec.className = "mq-q" + (questionIndex === 0 ? " is-active is-enter" : "");
+        sec.dataset.index = String(questionIndex);
+        if (questionIndex !== 0) sec.hidden = true;
+
+        const h2 = document.createElement("h2");
+        h2.className = "mq-q-title";
+        h2.textContent = question.text;
+        sec.appendChild(h2);
+
+        const opts = document.createElement("div");
+        opts.className = "mq-options";
+        question.options.forEach((option, optionIndex) => {
+          const id = "q" + questionIndex + "_opt" + optionIndex;
+          const label = document.createElement("label");
+          label.className = "mq-option";
+          label.setAttribute("for", id);
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = "q" + questionIndex;
+          input.id = id;
+          input.value = String(optionIndex);
+          const span = document.createElement("span");
+          span.textContent = option[0];
+          label.append(input, span);
+          input.addEventListener("change", () => {
+            answers[questionIndex] = optionIndex;
+            opts.querySelectorAll(".mq-option").forEach((el) => el.classList.remove("is-selected"));
+            label.classList.add("is-selected");
+            error.classList.remove("is-visible");
+            error.textContent = "";
+          });
+          opts.appendChild(label);
+        });
+        sec.appendChild(opts);
+
+        const nav = document.createElement("div");
+        nav.className = "mq-nav";
+        const back = document.createElement("button");
+        back.type = "button";
+        back.className = "mq-btn-secondary";
+        back.textContent = "Back";
+        back.disabled = questionIndex === 0;
+        back.addEventListener("click", () => goto(questionIndex - 1));
+        const next = document.createElement("button");
+        next.type = "button";
+        next.textContent = questionIndex === questions.length - 1 ? "See results" : "Next";
+        next.addEventListener("click", () => {
+          const checked = form.querySelector('input[name="q' + questionIndex + '"]:checked');
+          if (!checked) {
+            error.textContent = "Please choose an option to continue.";
+            error.classList.add("is-visible");
+            return;
+          }
+          answers[questionIndex] = Number(checked.value);
+          if (questionIndex === questions.length - 1) {
+            showResults(calculateScores());
+          } else {
+            goto(questionIndex + 1);
+          }
+        });
+        nav.append(back, next);
+        sec.appendChild(nav);
+        form.appendChild(sec);
+      });
+      updateProgress(0);
+    }
+
+    function goto(i) {
+      const total = questions.length;
+      if (i < 0) i = 0;
+      if (i >= total) i = total - 1;
+      if (transitioning || i === currentIndex) return;
+      const from = form.querySelector('.mq-q[data-index="' + currentIndex + '"]');
+      const to = form.querySelector('.mq-q[data-index="' + i + '"]');
+      transitioning = true;
+      currentIndex = i;
+      MQ.stageQuestion(from, to, {
+        onDone: () => {
+          transitioning = false;
+          to.querySelector('input[type="radio"]')?.focus();
+        },
+      });
+      updateProgress(i);
+    }
+
+    function updateProgress(idx) {
+      MQ.setProgress(barEl, (idx / questions.length) * 100);
+      progressCount.textContent = (idx + 1) + " / " + questions.length;
+    }
+
+    function calculateScores() {
+      const scores = Object.fromEntries(Object.keys(labels).map((key) => [key, 0]));
+      questions.forEach((question, questionIndex) => {
+        const selected = form.querySelector('input[name="q' + questionIndex + '"]:checked');
+        const weights = question.options[Number(selected.value)][1];
+        Object.entries(weights).forEach(([key, points]) => (scores[key] += points));
+      });
+      return scores;
+    }
+
+    function chooseProfile(scores) {
+      const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const [first, second] = ranked;
+      const nearTop = ranked.filter(([, score]) => score >= first[1] - 3).length;
+      if (nearTop >= 4 || (first[1] - second[1] <= 1 && ranked[2][1] >= first[1] - 2)) return profiles.pluralist;
+      return profiles[first[0]];
+    }
+
+    function showResults(scores) {
+      const profile = chooseProfile(scores);
+      const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const max = Math.max(...Object.values(scores), 1);
+
+      document.getElementById("result-name").textContent = profile.name;
+      document.getElementById("result-summary").textContent = profile.summary;
+      document.getElementById("result-principle").textContent = profile.principle;
+      document.getElementById("result-blindspot").textContent = profile.blindspot;
+
+      const bars = document.getElementById("score-bars");
+      bars.innerHTML = ranked
+        .map(([key, score], i) => {
+          const pct = Math.round((score / max) * 100);
+          return (
+            '<div class="mq-rank-row' +
+            (i === 0 ? " is-top" : "") +
+            '">' +
+            '<div class="mq-rank-name">' +
+            labels[key] +
+            "</div>" +
+            '<div class="mq-rank-track"><span class="mq-rank-fill" data-width="' +
+            pct +
+            '%"></span></div>' +
+            '<div class="mq-rank-pct">' +
+            score +
+            "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+
+      const topNames = ranked.slice(0, 3).map(([key]) => labels[key]);
+      const bottomName = labels[ranked[ranked.length - 1][0]];
+      document.getElementById("score-explanation").textContent =
+        `Your strongest affinities were ${topNames[0]}, ${topNames[1]}, and ${topNames[2]}. ` +
+        `${bottomName} received the least weight. Scores describe how your nonconformity tends to operate; they do not measure how rebellious, authentic, or independent you are.`;
+
+      form.style.display = "none";
+      results.hidden = false;
+      results.classList.add("is-visible");
+      MQ.setProgress(barEl, 100);
+      progressCount.textContent = questions.length + " / " + questions.length;
+      MQ.staggerReveal(bars);
+      results.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    document.getElementById("restart").addEventListener("click", () => {
+      Object.keys(answers).forEach((k) => delete answers[k]);
+      form.querySelectorAll('input[type="radio"]').forEach((r) => (r.checked = false));
+      form.querySelectorAll(".mq-option").forEach((el) => el.classList.remove("is-selected"));
+      results.hidden = true;
+      results.classList.remove("is-visible");
+      form.style.display = "block";
+      currentIndex = 0;
+      form.querySelectorAll(".mq-q").forEach((q, idx) => {
+        q.classList.toggle("is-active", idx === 0);
+        q.classList.remove("is-exit");
+        q.hidden = idx !== 0;
+        if (idx === 0) {
+          q.classList.remove("is-enter");
+          void q.offsetWidth;
+          q.classList.add("is-enter");
+        }
+      });
+      error.textContent = "";
+      error.classList.remove("is-visible");
+      updateProgress(0);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    renderQuiz();
+  </script>
+</body>
+</html>
